@@ -3,7 +3,7 @@ authors = [{name = "Andrés Conrado Montoya Acosta (@conradolandia)", email = "c
 dependencies = []
 name = "ThemeWeaver"
 requires-python = ">= 3.12"
-version = "0.2.0"
+version = "0.2.2"
 
 [build-system]
 build-backend = "hatchling.build"
@@ -14,7 +14,7 @@ allow-direct-references = true
 
 # Configuration for the generated spyder-themes Python package
 [tool.themeweaver.spyder-package]
-version = "0.1.1"
+version = "0.1.2"
 display_name = "Spyder Themes"
 description = "Collection of themes for Spyder IDE"
 authors = [

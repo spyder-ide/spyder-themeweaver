@@ -67,6 +67,32 @@ pixi run theme-info solarized
 pixi run validate solarized
 ```
 
+### Theme export
+
+Exports theme assets under `build/` using QDarkStyle tooling.
+
+```bash
+# Pixi shortcuts
+pixi run export spyder
+pixi run export-dark spyder
+pixi run export-light spyder
+pixi run export-all
+
+# Direct CLI (for additional flags)
+pixi run cli export --theme spyder --variants dark,light
+pixi run cli export --all --compile-for qtpy
+pixi run cli export --theme spyder --generate-palette-images
+```
+
+Export flags include:
+
+- `--theme` or `--all` (required, mutually exclusive)
+- `--variants` (`dark`, `light`, or both)
+- `--theme-dir` (source theme directory)
+- `-o` / `--output` (build destination)
+- `--compile-for` (QDarkStyle `_rc` target; default: `qtpy`)
+- `--generate-palette-images` (emit `palette.svg` and `palette.png`; default: off)
+
 ### Contrast validation
 
 Checks resolved theme colors against rule sets in `src/themeweaver/contrast/` (`rules_dark.yaml`, `rules_light.yaml`). Override with `--rules-dir` if you maintain a fork of the rules.

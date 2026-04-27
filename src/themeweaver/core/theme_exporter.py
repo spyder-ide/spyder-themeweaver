@@ -45,6 +45,8 @@ class ThemeExporter:
         theme_name: str,
         variants: Optional[List[str]] = None,
         cleanup_intermediate: bool = True,
+        compile_for: str = "qtpy",
+        generate_palette_images: bool = False,
     ) -> Dict[str, Path]:
         """Export a complete theme package with assets and Python files.
 
@@ -52,6 +54,8 @@ class ThemeExporter:
             theme_name: Name of the theme to export
             variants: List of variants to export ('dark', 'light'). If None, exports all supported variants.
             cleanup_intermediate: Whether to remove intermediate files (SASS, redundant palette.py)
+            compile_for: Qt binding target for compiled resource modules
+            generate_palette_images: Whether to generate palette.svg and palette.png preview files
 
         Returns:
             Dict mapping variant names to their export directories
@@ -111,7 +115,12 @@ class ThemeExporter:
 
             # Export QDarkStyle assets for this variant
             variant_dir = self.asset_exporter.export_assets(
-                palette_class, export_dir, variant, cleanup_intermediate
+                palette_class,
+                export_dir,
+                variant,
+                cleanup_intermediate,
+                compile_for=compile_for,
+                generate_palette_images=generate_palette_images,
             )
             exported_paths[variant] = variant_dir
 
@@ -124,12 +133,17 @@ class ThemeExporter:
         return exported_paths
 
     def export_all_themes(
-        self, cleanup_intermediate: bool = True
+        self,
+        cleanup_intermediate: bool = True,
+        compile_for: str = "qtpy",
+        generate_palette_images: bool = False,
     ) -> Dict[str, Dict[str, Path]]:
         """Export all available themes.
 
         Args:
             cleanup_intermediate: Whether to remove intermediate files (SASS, redundant palette.py)
+            compile_for: Qt binding target for compiled resource modules
+            generate_palette_images: Whether to generate palette.svg and palette.png preview files
 
         Returns:
             Dict mapping theme names to their variant export paths
@@ -147,7 +161,10 @@ class ThemeExporter:
             theme_name = theme_dir.name
             try:
                 exported_themes[theme_name] = self.export_theme(
-                    theme_name, cleanup_intermediate=cleanup_intermediate
+                    theme_name,
+                    cleanup_intermediate=cleanup_intermediate,
+                    compile_for=compile_for,
+                    generate_palette_images=generate_palette_images,
                 )
             except Exception as e:
                 _logger.error("❌ Failed to export theme '%s': %s", theme_name, e)

@@ -80,7 +80,11 @@ class SpyderPackageExporter:
                 continue
 
             theme_dst = python_package_dir / theme_name
-            shutil.copytree(theme_src, theme_dst)
+            shutil.copytree(
+                theme_src,
+                theme_dst,
+                ignore=shutil.ignore_patterns("palette.png", "palette.svg"),
+            )
             valid_themes.append(theme_name)
             _logger.info("  • Added theme: %s", theme_name)
 

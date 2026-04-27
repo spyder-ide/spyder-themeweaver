@@ -89,6 +89,28 @@ def create_parser():
         "-o",
         help="Output directory where exported themes will be saved (destination). Default: build/ (at workspace root)",
     )
+    export_parser.add_argument(
+        "--compile-for",
+        default="qtpy",
+        choices=[
+            "pyqt5",
+            "pyqt6",
+            "pyside2",
+            "pyside6",
+            "qtpy",
+            "pyqtgraph",
+            "qt",
+            "qt5",
+            "all",
+        ],
+        help="Qt binding target for generated _rc modules (default: qtpy)",
+    )
+    export_parser.add_argument(
+        "--generate-palette-images",
+        action="store_true",
+        default=False,
+        help="Generate palette.svg and palette.png preview files (default: False)",
+    )
     export_parser.set_defaults(func=cmd_export)
 
     # Validate command

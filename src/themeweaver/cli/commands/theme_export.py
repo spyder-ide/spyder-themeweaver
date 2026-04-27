@@ -25,11 +25,25 @@ def cmd_export(args: Any) -> None:
 
     # Create exporter with custom directories
     exporter = ThemeExporter(build_dir=build_dir, themes_dir=themes_dir)
+    raw_compile_for = getattr(args, "compile_for", None)
+    compile_for = raw_compile_for if isinstance(raw_compile_for, str) else "qtpy"
+    raw_generate_palette_images = getattr(args, "generate_palette_images", None)
+    generate_palette_images = (
+        raw_generate_palette_images
+        if isinstance(raw_generate_palette_images, bool)
+        else False
+    )
+
+    export_options = {}
+    if compile_for != "qtpy":
+        export_options["compile_for"] = compile_for
+    if generate_palette_images:
+        export_options["generate_palette_images"] = generate_palette_images
 
     if args.all:
         _logger.info("🎨 Exporting all themes...")
         with operation_context("Theme export"):
-            exported = exporter.export_all_themes()
+            exported = exporter.export_all_themes(**export_options)
 
             _logger.info("✅ Successfully exported %d themes:", len(exported))
             for theme_name, variants in exported.items():
@@ -41,7 +55,11 @@ def cmd_export(args: Any) -> None:
         variants = args.variants.split(",") if args.variants else None
 
         with operation_context("Theme export"):
-            exported = exporter.export_theme(theme_name, variants)
+            exported = exporter.export_theme(
+                theme_name,
+                variants,
+                **export_options,
+            )
 
             _logger.info("✅ Successfully exported theme '%s':", theme_name)
             for variant, path in exported.items():
