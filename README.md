@@ -10,7 +10,7 @@ This project uses [Pixi](https://pixi.sh/) for dependencies and tasks. Run tasks
 
 - [Pixi](https://pixi.sh/)
 - Python 3.12+ (provided by the pixi environment)
-- Linux (`tool.pixi.workspace.platforms = ["linux-64"]` in this repository)
+- A supported Pixi platform: Linux x86_64, Windows x86_64, or macOS (Intel or Apple Silicon); see `tool.pixi.workspace.platforms` in `pyproject.toml`
 
 ### Installation
 

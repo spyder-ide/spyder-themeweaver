@@ -9,6 +9,7 @@ the package structure.
 import importlib.util
 import logging
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import List
@@ -77,7 +78,7 @@ class QDarkStyleAssetExporter:
                 # Build QDarkStyle CLI command - point to theme root, not variant dir
                 theme_root = export_dir  # /build/theme (not /build/theme/dark)
                 cmd = [
-                    "python",
+                    sys.executable,
                     "-m",
                     "qdarkstyle.utils",
                     "--base-path",
