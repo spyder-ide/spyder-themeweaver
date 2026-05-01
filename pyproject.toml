@@ -93,6 +93,10 @@ inspect-cov = "python -m http.server -b 127.0.0.1 -d ./htmlcov 8000"
 
 [tool.pytest.ini_options]
 pythonpath = ["tests"]
+# colorspacious: docstrings with LaTeX (e.g. \\Delta) emit SyntaxWarning on Python 3.12+ until fixed upstream.
+filterwarnings = [
+    "ignore::SyntaxWarning:colorspacious\\.comparison",
+]
 
 # Coverage configuration
 [tool.coverage.run]

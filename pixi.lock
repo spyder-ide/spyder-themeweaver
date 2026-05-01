@@ -6255,7 +6255,7 @@ packages:
 - pypi: ./
   name: themeweaver
   version: 0.4.2
-  sha256: 109136a63af2f73a07baef23ca994296e929e4854af698eabcf72928a3954d1a
+  sha256: 969aff32ec128b2e456d714defaff97c0d68d6e35edb0f4469e5dab6bb8fd436
   requires_python: '>=3.12'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_hd72426e_102.conda
