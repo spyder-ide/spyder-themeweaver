@@ -88,6 +88,7 @@ class TestSpyderPackageExporter:
         assert "2.0.0" in text
         assert 'readme = "README.md"' in text
         assert 'license-files = ["LICENSE"]' in text
+        assert '"**/*.yaml"' in text
         readme = (pkg / "README.md").read_text(encoding="utf-8")
         assert "## Included themes" in readme
         assert "- `alpha`" in readme

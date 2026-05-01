@@ -387,32 +387,7 @@ class Palette(object):
             imports = "from .palette import SpyderPaletteLight"
             exports = "['SpyderPaletteLight', 'THEME_ID']"
 
-        # Generate content with full metadata
-        display_name = theme_metadata.get("display_name", theme_name.title())
-        author = theme_metadata.get("author", "Unknown")
-        description = theme_metadata.get("description", "")
-        version = theme_metadata.get("version", "1.0.0")
-        tags = theme_metadata.get("tags", [])
-
-        # Build metadata docstring
-        metadata_lines = [f"Theme: {display_name}"]
-        if author:
-            metadata_lines.append(f"Author: {author}")
-        if description:
-            metadata_lines.append(f"Description: {description}")
-        if version:
-            metadata_lines.append(f"Version: {version}")
-        if tags:
-            tags_str = ", ".join(tags) if isinstance(tags, list) else str(tags)
-            metadata_lines.append(f"Tags: {tags_str}")
-
-        metadata_docstring = "\n".join(metadata_lines)
-
         content = f'''# -*- coding: utf-8 -*-
-"""
-{metadata_docstring}
-"""
-
 {imports}
 
 THEME_ID = "{theme_name}"

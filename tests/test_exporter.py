@@ -57,16 +57,28 @@ class TestThemeExporterSpyderExport:
         spyder_full_export: tuple[ThemeExporter, Path, dict[str, Any]],
     ) -> None:
         """Test that exported files have expected structure."""
-        _exporter, build_dir, _result = spyder_full_export
+        exporter, build_dir, _result = spyder_full_export
 
         spyder_dir = build_dir / "spyder"
         assert spyder_dir.exists()
 
-        expected_files = ["colorsystem.py", "palette.py"]
+        expected_files = ["colorsystem.py", "palette.py", "__init__.py", "theme.yaml"]
         for file_name in expected_files:
             file_path = spyder_dir / file_name
             assert file_path.exists()
             assert file_path.stat().st_size > 0
+
+        init_text = (spyder_dir / "__init__.py").read_text(encoding="utf-8")
+        assert "from .palette import SpyderPaletteDark, SpyderPaletteLight" in init_text
+        assert 'THEME_ID = "spyder"' in init_text
+        assert "Theme:" not in init_text
+        assert "Author:" not in init_text
+
+        source_yaml = (exporter.themes_dir / "spyder" / "theme.yaml").read_text(
+            encoding="utf-8"
+        )
+        exported_yaml = (spyder_dir / "theme.yaml").read_text(encoding="utf-8")
+        assert exported_yaml == source_yaml
 
         for variant in ["dark", "light"]:
             variant_dir = spyder_dir / variant

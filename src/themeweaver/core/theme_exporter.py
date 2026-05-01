@@ -8,6 +8,7 @@ This module orchestrates the complete theme export process by coordinating:
 """
 
 import logging
+import shutil
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -128,9 +129,18 @@ class ThemeExporter:
         self.spyder_generator.generate_files(
             theme_name, theme_metadata, export_dir, themes_dir=self.themes_dir
         )
+        self._copy_theme_metadata(theme_name, export_dir)
 
         _logger.info("✅ Theme '%s' exported to: %s", theme_name, export_dir)
         return exported_paths
+
+    def _copy_theme_metadata(self, theme_name: str, export_dir: Path) -> None:
+        """Copy theme metadata YAML into the exported theme directory."""
+        source = self.themes_dir / theme_name / "theme.yaml"
+        destination = export_dir / "theme.yaml"
+        if source.is_file():
+            shutil.copy2(source, destination)
+            _logger.info("📄 Copied metadata: %s", destination.name)
 
     def export_all_themes(
         self,
