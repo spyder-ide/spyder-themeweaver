@@ -4,7 +4,7 @@
 _default_tolerance: 0.2
 # PE1 removed: redundant with PE5A/B/C fg_bg_min (9 > 7)
 PE2: {fg: EDITOR_CURRENTLINE, bg: EDITOR_BACKGROUND, greater_than: PE3}
-PE3: {fg: EDITOR_CURRENTCELL, bg: EDITOR_BACKGROUND, greater_than: PE4}
+PE3: {fg: EDITOR_CURRENTCELL, bg: EDITOR_BACKGROUND, greater_than: PE4, tolerance: 0.3}
 PE4: {fg: EDITOR_SIDEAREAS, bg: EDITOR_BACKGROUND, min_ratio: 1.1}
 PE5A: {fg: EDITOR_NORMAL, line_bg: COLOR_OCCURRENCE_4, bg: EDITOR_BACKGROUND, fg_lbg_min: 3,
   lbg_bg_min: 2, fg_bg_min: 9}
