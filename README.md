@@ -21,6 +21,8 @@ pixi run python --version
 
 ## Quick start
 
+Run the commands below from the **repository root** (where `pyproject.toml` and the `themes/` directory live) so default paths resolve correctly. Use `--theme-dir` if you run the CLI from another working directory.
+
 ```bash
 # List themes in themes/
 pixi run list-themes
@@ -61,6 +63,8 @@ Use `pixi run cli …` for flags not covered by a task, or `pixi run cli <comman
 
 ### Theme management
 
+The `list-themes` Pixi task runs the CLI `list` subcommand (`pixi run cli list`).
+
 ```bash
 pixi run list-themes
 pixi run theme-info solarized
@@ -92,6 +96,8 @@ Export flags include:
 - `-o` / `--output` (build destination)
 - `--compile-for` (QDarkStyle `_rc` target; default: `qtpy`)
 - `--generate-palette-images` (emit `palette.svg` and `palette.png`; default: off)
+
+Theme ids that contain shell metacharacters (for example `notepad++`) must be quoted when passed on the shell: `pixi run export 'notepad++'`.
 
 ### Contrast validation
 
