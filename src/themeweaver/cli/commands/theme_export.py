@@ -12,6 +12,17 @@ from themeweaver.core.theme_exporter import ThemeExporter
 _logger = logging.getLogger(__name__)
 
 
+def parse_theme_names(theme_args: list[str]) -> list[str]:
+    """Expand theme CLI arguments into a list of theme names."""
+    names: list[str] = []
+    for arg in theme_args:
+        for part in arg.split(","):
+            name = part.strip()
+            if name:
+                names.append(name)
+    return names
+
+
 def cmd_export(args: Any) -> None:
     """Export theme(s) to build directory."""
 
@@ -50,17 +61,17 @@ def cmd_export(args: Any) -> None:
                 _logger.info("  • %s: %s", theme_name, ", ".join(variants.keys()))
 
     else:
-        # Export specific theme
-        theme_name = args.theme
+        theme_names = parse_theme_names(args.theme)
         variants = args.variants.split(",") if args.variants else None
 
         with operation_context("Theme export"):
-            exported = exporter.export_theme(
-                theme_name,
-                variants,
-                **export_options,
-            )
+            for theme_name in theme_names:
+                exported = exporter.export_theme(
+                    theme_name,
+                    variants,
+                    **export_options,
+                )
 
-            _logger.info("✅ Successfully exported theme '%s':", theme_name)
-            for variant, path in exported.items():
-                _logger.info("  • %s: %s", variant, path)
+                _logger.info("✅ Successfully exported theme '%s':", theme_name)
+                for variant, path in exported.items():
+                    _logger.info("  • %s: %s", variant, path)

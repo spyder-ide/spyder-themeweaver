@@ -73,7 +73,12 @@ def create_parser():
         "export", help="Export theme(s) to build directory"
     )
     export_group = export_parser.add_mutually_exclusive_group(required=True)
-    export_group.add_argument("--theme", help="Theme name to export")
+    export_group.add_argument(
+        "--theme",
+        nargs="+",
+        metavar="THEME",
+        help="One or more theme names (space- or comma-separated, e.g. gruvbox inkpot or gruvbox,inkpot)",
+    )
     export_group.add_argument("--all", action="store_true", help="Export all themes")
 
     export_parser.add_argument(
