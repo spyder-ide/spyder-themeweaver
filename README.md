@@ -321,30 +321,6 @@ my_theme:
     string: none
 ```
 
-Example fragment with a **full** dark syntax list (17 entries, `B10`→`B170` order). Values match `CatppuccinMochaSyntaxDark` in `themes/catppuccin-mocha/colorsystem.yaml` and illustrate a complete override:
-
-```yaml
-  syntax-colors:
-    dark:
-      - "#181926"
-      - "#1e1e2e"
-      - "#57367d"
-      - "#cdd6f4"
-      - "#181926"
-      - "#a6e3a1"
-      - "#f38ba8"
-      - "#afb5ce"
-      - "#cba6f7"
-      - "#f5e0dc"
-      - "#f38ba8"
-      - "#89b4fa"
-      - "#9399b2"
-      - "#a6e3a1"
-      - "#fab387"
-      - "#eba0ac"
-      - "#9a76c2"
-```
-
 #### After generation
 
 Run `pixi run validate <name>` on the new tree if you want structural checks only, or `pixi run validate-contrast <name>` for Spyder rule checks. To produce QSS under `build/`, run `pixi run export <name>` (and add `--theme-dir` if you used `--output-dir`).

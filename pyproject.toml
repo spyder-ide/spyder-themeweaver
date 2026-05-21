@@ -14,7 +14,7 @@ allow-direct-references = true
 
 # Configuration for the generated spyder-themes Python package
 [tool.themeweaver.spyder-package]
-version = "1.0.1"
+version = "1.0.2"
 display_name = "Spyder Themes"
 description = "Collection of themes for Spyder IDE"
 authors = [
@@ -78,9 +78,9 @@ generate = "python -m themeweaver.cli generate"
 validate = "python -m themeweaver.cli validate"
 validate-contrast = "python -m themeweaver.cli validate-contrast"
 validate-contrast-all = "python -m themeweaver.cli validate-contrast --all"
-interpolate = "python -m themeweaver.cli interpolate $START_COLOR $END_COLOR $STEPS"
-interpolate-lch = "python -m themeweaver.cli interpolate $START_COLOR $END_COLOR $STEPS --method lch"
-interpolate-hsv = "python -m themeweaver.cli interpolate $START_COLOR $END_COLOR $STEPS --method hsv"
+interpolate = "python -m themeweaver.cli interpolate"
+interpolate-lch = "python -m themeweaver.cli interpolate --method lch"
+interpolate-hsv = "python -m themeweaver.cli interpolate --method hsv"
 palette = "python -m themeweaver.cli palette"
 gradient = "python -m themeweaver.cli gradient"
 preview = "python -m scripts.theme_preview"
