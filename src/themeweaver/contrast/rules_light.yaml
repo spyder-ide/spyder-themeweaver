@@ -10,7 +10,7 @@ PE5A: {fg: EDITOR_NORMAL, line_bg: COLOR_OCCURRENCE_4, bg: EDITOR_BACKGROUND, fg
   lbg_bg_min: 2, fg_bg_min: 9}
 PE5B: {fg: EDITOR_NORMAL, line_bg: EDITOR_OCCURRENCE, bg: EDITOR_BACKGROUND, fg_lbg_min: 4,
   lbg_bg_min: 1.2, fg_bg_min: 9}
-PE5C: {fg: EDITOR_NORMAL, line_bg: COLOR_ACCENT_2, bg: EDITOR_BACKGROUND, fg_lbg_min: 5,
+PE5C: {fg: EDITOR_NORMAL, line_bg: COLOR_ACCENT_2, bg: EDITOR_BACKGROUND, fg_lbg_min: 2.5,
   lbg_bg_min: 1.2, fg_bg_min: 9}
 PE6: {fg: EDITOR_CTRLCLICK, bg: EDITOR_BACKGROUND, min_ratio: 5}
 PE7: {fg: EDITOR_MATCHED_P, bg: EDITOR_BACKGROUND, min_ratio: 1.2}
@@ -25,9 +25,9 @@ PE15: {fg: EDITOR_COMMENT, bg: EDITOR_BACKGROUND, min_ratio: 2}
 PE16: {fg: EDITOR_STRING, bg: EDITOR_BACKGROUND, min_ratio: 3}
 PE17: {fg: COLOR_ERROR_1, bg: EDITOR_BACKGROUND, min_ratio: 5}
 PE18: {fg: COLOR_WARN_2, bg: EDITOR_BACKGROUND, min_ratio: 2.5}
-PE19: {fg: ICON_7, bg: EDITOR_BACKGROUND, min_ratio: 3}
-PE20: {fg: ICON_3, bg: EDITOR_BACKGROUND, min_ratio: 5, tolerance: 0.6}
-PE21: {fg: ICON_4, bg: EDITOR_BACKGROUND, min_ratio: 3.5}
+PE19: {fg: ICON_7, bg: EDITOR_BACKGROUND, min_ratio: 3, tolerance: 0.4}
+PE20: {fg: ICON_3, bg: EDITOR_BACKGROUND, min_ratio: 3, tolerance: 0.6}
+PE21: {fg: ICON_4, bg: EDITOR_BACKGROUND, min_ratio: 3, tolerance: 0.4}
 PE22: {fg: COLOR_ERROR_1, bg: EDITOR_BACKGROUND, min_ratio: 3, fg_opacity: 0.75}
 PE23: {fg: EDITOR_SYMBOL, bg: EDITOR_BACKGROUND, min_ratio: 5}
 PB1: {fg: COLOR_BACKGROUND_6, bg: COLOR_BACKGROUND_4, min_ratio: 1.2}
