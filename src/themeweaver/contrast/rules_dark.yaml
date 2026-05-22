@@ -8,9 +8,9 @@ PE3: {fg: EDITOR_CURRENTCELL, bg: EDITOR_BACKGROUND, greater_than: PE4, toleranc
 PE4: {fg: EDITOR_SIDEAREAS, bg: EDITOR_BACKGROUND, min_ratio: 1.1}
 PE5A: {fg: EDITOR_NORMAL, line_bg: COLOR_OCCURRENCE_4, bg: EDITOR_BACKGROUND, fg_lbg_min: 3,
   lbg_bg_min: 2, fg_bg_min: 9}
-PE5B: {fg: EDITOR_NORMAL, line_bg: EDITOR_OCCURRENCE, bg: EDITOR_BACKGROUND, fg_lbg_min: 3.8,
+PE5B: {fg: EDITOR_NORMAL, line_bg: EDITOR_OCCURRENCE, bg: EDITOR_BACKGROUND, fg_lbg_min: 3,
   lbg_bg_min: 2, fg_bg_min: 9}
-PE5C: {fg: EDITOR_NORMAL, line_bg: COLOR_ACCENT_2, bg: EDITOR_BACKGROUND, fg_lbg_min: 4.6,
+PE5C: {fg: EDITOR_NORMAL, line_bg: COLOR_ACCENT_2, bg: EDITOR_BACKGROUND, fg_lbg_min: 2,
   lbg_bg_min: 2, fg_bg_min: 9}
 PE6: {fg: EDITOR_CTRLCLICK, bg: EDITOR_BACKGROUND, min_ratio: 3}
 PE7: {fg: EDITOR_MATCHED_P, bg: EDITOR_BACKGROUND, min_ratio: 4.5}
