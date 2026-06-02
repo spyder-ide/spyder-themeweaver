@@ -62,12 +62,23 @@ def _read_package_metadata_from_pyproject(workspace_root: Path) -> dict[str, Any
         return defaults
 
 
-def _run_python_build(package_dir: Path, build_outdir: Optional[Path]) -> None:
+def _run_python_build(
+    package_dir: Path,
+    build_outdir: Optional[Path],
+    *,
+    verbose: bool = False,
+) -> None:
     """Run ``python -m build`` on the generated project directory."""
-    cmd: list[str] = [sys.executable, "-m", "build", str(package_dir)]
+    cmd: list[str] = [
+        sys.executable,
+        "-m",
+        "build",
+        "--verbose" if verbose else "--quiet",
+        str(package_dir),
+    ]
     if build_outdir is not None:
         cmd.extend(["--outdir", str(build_outdir)])
-    _logger.info("Running: %s", " ".join(cmd))
+    _logger.debug("Running: %s", " ".join(cmd))
     result = subprocess.run(cmd, check=False)
     if result.returncode != 0:
         raise SystemExit(result.returncode)
@@ -75,6 +86,9 @@ def _run_python_build(package_dir: Path, build_outdir: Optional[Path]) -> None:
 
 def cmd_python_package(args: Any) -> None:
     """Export themes as a single Spyder-compatible Python package."""
+    verbose = getattr(args, "verbose", False)
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     # Parse theme names if provided
     theme_names = None
@@ -110,4 +124,4 @@ def cmd_python_package(args: Any) -> None:
             else None
         )
         with operation_context("Building wheel and sdist"):
-            _run_python_build(package_dir, build_outdir)
+            _run_python_build(package_dir, build_outdir, verbose=verbose)

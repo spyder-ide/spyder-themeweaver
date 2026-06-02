@@ -13,8 +13,8 @@ PE5B: {fg: EDITOR_NORMAL, line_bg: EDITOR_OCCURRENCE, bg: EDITOR_BACKGROUND, fg_
 PE5C: {fg: EDITOR_NORMAL, line_bg: COLOR_ACCENT_2, bg: EDITOR_BACKGROUND, fg_lbg_min: 2,
   lbg_bg_min: 2, fg_bg_min: 9}
 PE6: {fg: EDITOR_CTRLCLICK, bg: EDITOR_BACKGROUND, min_ratio: 3}
-PE7: {fg: EDITOR_MATCHED_P, bg: EDITOR_BACKGROUND, min_ratio: 2}
-PE8: {fg: EDITOR_UNMATCHED_P, bg: EDITOR_BACKGROUND, min_ratio: 2}
+PE7: {fg: EDITOR_MATCHED_P, bg: EDITOR_BACKGROUND, min_ratio: 1.5}
+PE8: {fg: EDITOR_UNMATCHED_P, bg: EDITOR_BACKGROUND, min_ratio: 1.5}
 PE9: {fg: EDITOR_KEYWORD, bg: EDITOR_BACKGROUND, min_ratio: 3}
 PE10: {fg: EDITOR_DEFINITION, bg: EDITOR_BACKGROUND, min_ratio: 7}
 PE11: {fg: EDITOR_BUILTIN, bg: EDITOR_BACKGROUND, min_ratio: 7}
@@ -32,7 +32,7 @@ PE22: {fg: COLOR_ERROR_1, bg: EDITOR_BACKGROUND, min_ratio: 2, fg_opacity: 0.75}
 PE23: {fg: EDITOR_SYMBOL, bg: EDITOR_BACKGROUND, min_ratio: 5}
 PB1: {fg: COLOR_BACKGROUND_6, bg: COLOR_BACKGROUND_4, min_ratio: 1.5}
 PB2: {fg: COLOR_BACKGROUND_6, bg: COLOR_BACKGROUND_2, min_ratio: 3, greater_than: PB3}
-PB3: {fg: COLOR_BACKGROUND_5, bg: COLOR_BACKGROUND_3, greater_than: PB4, tolerance: 0.2}
+PB3: {fg: COLOR_BACKGROUND_5, bg: COLOR_BACKGROUND_3, greater_than: PB4}
 PB4: {fg: COLOR_BACKGROUND_4, bg: COLOR_BACKGROUND_1, greater_than: PB5}
 PB5: {fg: COLOR_BACKGROUND_3, bg: COLOR_BACKGROUND_1, greater_than: PB6}
 PB6: {fg: COLOR_BACKGROUND_2, bg: COLOR_BACKGROUND_1, min_ratio: 1}
@@ -43,27 +43,27 @@ PT4: {fg: COLOR_TEXT_1, bg: COLOR_BACKGROUND_4, greater_than: PT5, tolerance: 0.
 PT5: {fg: COLOR_TEXT_3, bg: COLOR_BACKGROUND_4, greater_than: PT6, tolerance: 0.5}
 PT6: {fg: COLOR_TEXT_4, bg: COLOR_BACKGROUND_4, min_ratio: 3}
 PA1: {fg: COLOR_ACCENT_3, bg: COLOR_BACKGROUND_1, min_ratio: 3}
-PA2: {fg: COLOR_ACCENT_4, bg: COLOR_BACKGROUND_1, min_ratio: 3, greater_than: PA1}
-PA3: {fg: COLOR_ACCENT_5, bg: COLOR_BACKGROUND_1, min_ratio: 6.5, greater_than: PA2}
-PA4: {fg: COLOR_ACCENT_4, bg: COLOR_BACKGROUND_4, min_ratio: 2.6}
+PA2: {fg: COLOR_ACCENT_4, bg: COLOR_BACKGROUND_1, min_ratio: 3.1, greater_than: PA1}
+PA3: {fg: COLOR_ACCENT_5, bg: COLOR_BACKGROUND_1, min_ratio: 4.5, greater_than: PA2}
+PA4: {fg: COLOR_ACCENT_4, bg: COLOR_BACKGROUND_4, min_ratio: 2.5}
 PA5: {fg: COLOR_ACCENT_5, bg: COLOR_BACKGROUND_4, min_ratio: 3}
-PA6: {fg: COLOR_ACCENT_4, bg: COLOR_BACKGROUND_5, min_ratio: 1.9}
-PA7: {fg: COLOR_ACCENT_5, bg: COLOR_BACKGROUND_5, min_ratio: 1.9}
-PI1: {fg: ICON_1, bg: COLOR_BACKGROUND_4, min_ratio: 6.5}
-PI2: {fg: ICON_2, bg: COLOR_BACKGROUND_4, min_ratio: 2.6}
-PI3: {fg: ICON_3, bg: COLOR_BACKGROUND_4, min_ratio: 2.6}
-PI4: {fg: ICON_4, bg: COLOR_BACKGROUND_4, min_ratio: 1.9}
-PI5: {fg: ICON_5, bg: COLOR_BACKGROUND_4, min_ratio: 2.6}
+PA6: {fg: COLOR_ACCENT_4, bg: COLOR_BACKGROUND_5, min_ratio: 1.5}
+PA7: {fg: COLOR_ACCENT_5, bg: COLOR_BACKGROUND_5, min_ratio: 1.5}
+PI1: {fg: ICON_1, bg: COLOR_BACKGROUND_4, min_ratio: 4.5}
+PI2: {fg: ICON_2, bg: COLOR_BACKGROUND_4, min_ratio: 2}
+PI3: {fg: ICON_3, bg: COLOR_BACKGROUND_4, min_ratio: 2}
+PI4: {fg: ICON_4, bg: COLOR_BACKGROUND_4, min_ratio: 2}
+PI5: {fg: ICON_5, bg: COLOR_BACKGROUND_4, min_ratio: 2}
 PI6: {fg: ICON_6, bg: COLOR_BACKGROUND_4, min_ratio: 1.1}
-PI7: {fg: ICON_7, bg: COLOR_BACKGROUND_4, min_ratio: 2.6}
+PI7: {fg: ICON_7, bg: COLOR_BACKGROUND_4, min_ratio: 2}
 PI8: {fg: COLOR_DISABLED, bg: COLOR_BACKGROUND_4, min_ratio: 1, max_ratio: 4}
-PI9: {fg: ICON_1, bg: COLOR_BACKGROUND_1, min_ratio: 7}
-PI10: {fg: ICON_2, bg: COLOR_BACKGROUND_1, min_ratio: 4}
-PI11: {fg: ICON_3, bg: COLOR_BACKGROUND_1, min_ratio: 4}
-PI12: {fg: ICON_4, bg: COLOR_BACKGROUND_1, min_ratio: 3}
-PI13: {fg: ICON_5, bg: COLOR_BACKGROUND_1, min_ratio: 4}
-PI14: {fg: ICON_6, bg: COLOR_BACKGROUND_1, min_ratio: 1}
-PI15: {fg: ICON_7, bg: COLOR_BACKGROUND_1, min_ratio: 4}
+PI9: {fg: ICON_1, bg: COLOR_BACKGROUND_1, min_ratio: 4.5}
+PI10: {fg: ICON_2, bg: COLOR_BACKGROUND_1, min_ratio: 2}
+PI11: {fg: ICON_3, bg: COLOR_BACKGROUND_1, min_ratio: 2}
+PI12: {fg: ICON_4, bg: COLOR_BACKGROUND_1, min_ratio: 2}
+PI13: {fg: ICON_5, bg: COLOR_BACKGROUND_1, min_ratio: 2}
+PI14: {fg: ICON_6, bg: COLOR_BACKGROUND_1, min_ratio: 1.1}
+PI15: {fg: ICON_7, bg: COLOR_BACKGROUND_1, min_ratio: 2}
 PI16: {fg: COLOR_DISABLED, bg: COLOR_BACKGROUND_1, min_ratio: 1, max_ratio: 5}
 PG:
   fg: COLOR_TEXT_1

@@ -443,6 +443,12 @@ def create_parser():
         metavar="DIR",
         help="Pass --outdir to build (default: <package_dir>/dist)",
     )
+    parser_python_package.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Show detailed packaging and python -m build output",
+    )
     parser_python_package.set_defaults(func=cmd_python_package)
 
     return parser

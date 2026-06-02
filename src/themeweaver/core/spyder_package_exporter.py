@@ -86,7 +86,7 @@ class SpyderPackageExporter:
                 ignore=shutil.ignore_patterns("palette.png", "palette.svg"),
             )
             valid_themes.append(theme_name)
-            _logger.info("  • Added theme: %s", theme_name)
+            _logger.debug("  • Added theme: %s", theme_name)
 
         # Generate package __init__.py inside the Python package directory
         self._generate_root_init(python_package_dir, valid_themes, metadata)
@@ -184,7 +184,7 @@ __all__ = ['THEMES', 'get_theme_module', '__version__']
 
         init_path = package_dir / "__init__.py"
         init_path.write_text(content, encoding="utf-8")
-        _logger.info("  • Generated: __init__.py")
+        _logger.debug("  • Generated: __init__.py")
 
     def _toml_double_quoted(self, value: str) -> str:
         """Escape a string for TOML double-quoted literal."""
@@ -260,7 +260,7 @@ include = ["{self.package_name}*"]
 
         pyproject_path = package_dir / "pyproject.toml"
         pyproject_path.write_text(content, encoding="utf-8")
-        _logger.info("  • Generated: pyproject.toml")
+        _logger.debug("  • Generated: pyproject.toml")
 
     def _generate_readme(
         self,
@@ -292,7 +292,7 @@ include = ["{self.package_name}*"]
         )
         readme_path = package_dir / "README.md"
         readme_path.write_text(text, encoding="utf-8")
-        _logger.info("  • Generated: README.md")
+        _logger.debug("  • Generated: README.md")
 
     def _copy_license(self, package_dir: Path) -> None:
         """Copy workspace LICENSE into the generated package root."""
@@ -301,4 +301,4 @@ include = ["{self.package_name}*"]
             _logger.warning("LICENSE not found at %s; skipping copy", src)
             return
         shutil.copy2(src, package_dir / "LICENSE")
-        _logger.info("  • Copied: LICENSE")
+        _logger.debug("  • Copied: LICENSE")

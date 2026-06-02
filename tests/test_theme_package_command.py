@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 from themeweaver.cli.commands.theme_package import (
     _read_package_metadata_from_pyproject,
+    _run_python_build,
     cmd_python_package,
 )
 
@@ -150,7 +151,9 @@ class TestCmdPythonPackage:
                 ) as mock_build:
                     cmd_python_package(args)
 
-        mock_build.assert_called_once_with(pkg_dir, Path("/tmp/wheels").resolve())
+        mock_build.assert_called_once_with(
+            pkg_dir, Path("/tmp/wheels").resolve(), verbose=False
+        )
 
     def test_cmd_python_package_run_build_default_outdir(self) -> None:
         pkg_dir = Path("/tmp/dist/spyder_themes")
@@ -180,4 +183,60 @@ class TestCmdPythonPackage:
                 ) as mock_build:
                     cmd_python_package(args)
 
-        mock_build.assert_called_once_with(pkg_dir, None)
+        mock_build.assert_called_once_with(pkg_dir, None, verbose=False)
+
+    def test_cmd_python_package_verbose_passes_flag_to_build(self) -> None:
+        pkg_dir = Path("/tmp/dist/spyder_themes")
+        args = SimpleNamespace(
+            themes=None,
+            output=None,
+            with_pyproject=True,
+            validate=True,
+            run_build=True,
+            build_outdir=None,
+            verbose=True,
+        )
+
+        with patch(
+            "themeweaver.cli.commands.theme_package.SpyderPackageExporter"
+        ) as mock_exporter_class:
+            mock_exporter = Mock()
+            mock_exporter.workspace_root = Path("/workspace")
+            mock_exporter.create_package.return_value = pkg_dir
+            mock_exporter_class.return_value = mock_exporter
+
+            with patch(
+                "themeweaver.cli.commands.theme_package._read_package_metadata_from_pyproject",
+                return_value={"version": "1.0.0"},
+            ):
+                with patch(
+                    "themeweaver.cli.commands.theme_package._run_python_build"
+                ) as mock_build:
+                    cmd_python_package(args)
+
+        mock_build.assert_called_once_with(pkg_dir, None, verbose=True)
+
+
+class TestRunPythonBuild:
+    def test_run_python_build_uses_quiet_by_default(self) -> None:
+        package_dir = Path("/tmp/dist/spyder_themes")
+        with patch("themeweaver.cli.commands.theme_package.subprocess.run") as mock_run:
+            mock_run.return_value = Mock(returncode=0)
+            _run_python_build(package_dir, None)
+
+        cmd = mock_run.call_args[0][0]
+        assert "--quiet" in cmd
+        assert "--verbose" not in cmd
+
+    def test_run_python_build_uses_verbose_when_requested(self) -> None:
+        package_dir = Path("/tmp/dist/spyder_themes")
+        outdir = Path("/tmp/wheels")
+        with patch("themeweaver.cli.commands.theme_package.subprocess.run") as mock_run:
+            mock_run.return_value = Mock(returncode=0)
+            _run_python_build(package_dir, outdir, verbose=True)
+
+        cmd = mock_run.call_args[0][0]
+        assert "--verbose" in cmd
+        assert "--quiet" not in cmd
+        assert "--outdir" in cmd
+        assert str(outdir) in cmd
