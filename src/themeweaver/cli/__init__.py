@@ -10,6 +10,7 @@ import sys
 from importlib.metadata import PackageNotFoundError, version
 
 from themeweaver.cli.commands import (
+    cmd_dev_sync,
     cmd_export,
     cmd_generate,
     cmd_gradient,
@@ -117,6 +118,59 @@ def create_parser():
         help="Generate palette.svg and palette.png preview files (default: False)",
     )
     export_parser.set_defaults(func=cmd_export)
+
+    # Dev sync command
+    dev_sync_parser = subparsers.add_parser(
+        "dev-sync",
+        help="Export theme(s) and sync into editable spyder_themes tree (fast dev loop)",
+    )
+    dev_sync_parser.add_argument(
+        "--theme",
+        nargs="+",
+        required=True,
+        metavar="THEME",
+        help="One or more theme names (space- or comma-separated)",
+    )
+    dev_sync_parser.add_argument(
+        "--theme-dir",
+        help="Source directory where themes are stored (default: themes/ in cwd)",
+    )
+    dev_sync_parser.add_argument(
+        "--build-dir",
+        help="Build directory with exported themes (default: build/ at workspace root)",
+    )
+    dev_sync_parser.add_argument(
+        "--package-dir",
+        help="Editable spyder_themes package root (default: dist/spyder_themes/spyder_themes)",
+    )
+    dev_sync_parser.add_argument(
+        "--skip-export",
+        action="store_true",
+        help="Sync from build/ only; do not re-export",
+    )
+    dev_sync_parser.add_argument(
+        "--compile-for",
+        default="qtpy",
+        choices=[
+            "pyqt5",
+            "pyqt6",
+            "pyside2",
+            "pyside6",
+            "qtpy",
+            "pyqtgraph",
+            "qt",
+            "qt5",
+            "all",
+        ],
+        help="Qt binding target for generated _rc modules (default: qtpy)",
+    )
+    dev_sync_parser.add_argument(
+        "--generate-palette-images",
+        action="store_true",
+        default=False,
+        help="Generate palette.svg and palette.png preview files (default: False)",
+    )
+    dev_sync_parser.set_defaults(func=cmd_dev_sync)
 
     # Validate command
     validate_parser = subparsers.add_parser(

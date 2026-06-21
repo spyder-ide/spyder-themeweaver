@@ -134,7 +134,7 @@ def get_mappings_template(syntax_format: Optional[Dict[str, Dict[str, bool]]] = 
             "COLOR_HEART": "Secondary.B80",
             # For editor tooltips
             "TIP_TITLE_COLOR": "Success.B80",
-            "TIP_CHAR_HIGHLIGHT_COLOR": "Warning.B90",
+            "TIP_CHAR_HIGHLIGHT_COLOR": "Syntax.B170",
             # Tooltip opacity (numeric value, not a color reference)
             "OPACITY_TOOLTIP": 230,
         },
@@ -221,7 +221,7 @@ def get_mappings_template(syntax_format: Optional[Dict[str, Dict[str, bool]]] = 
             "COLOR_HEART": "Error.B70",
             # For editor tooltips
             "TIP_TITLE_COLOR": "Success.B30",
-            "TIP_CHAR_HIGHLIGHT_COLOR": "Warning.B40",
+            "TIP_CHAR_HIGHLIGHT_COLOR": "SyntaxLight.B170",
             # Tooltip opacity (numeric value, not a color reference)
             "OPACITY_TOOLTIP": 230,
         },

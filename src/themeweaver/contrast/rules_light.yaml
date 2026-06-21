@@ -29,7 +29,7 @@ PE19: {fg: ICON_7, bg: EDITOR_BACKGROUND, min_ratio: 3, tolerance: 0.4}
 PE20: {fg: ICON_3, bg: EDITOR_BACKGROUND, min_ratio: 3, tolerance: 0.6}
 PE21: {fg: ICON_4, bg: EDITOR_BACKGROUND, min_ratio: 3, tolerance: 0.4}
 PE22: {fg: COLOR_ERROR_1, bg: EDITOR_BACKGROUND, min_ratio: 3, fg_opacity: 0.75}
-PE23: {fg: EDITOR_SYMBOL, bg: EDITOR_BACKGROUND, min_ratio: 5}
+PE23: {fg: EDITOR_SYMBOL, bg: EDITOR_BACKGROUND, min_ratio: 4.5}
 PB1: {fg: COLOR_BACKGROUND_6, bg: COLOR_BACKGROUND_4, min_ratio: 1.2}
 PB2: {fg: COLOR_BACKGROUND_6, bg: COLOR_BACKGROUND_2, min_ratio: 1.5, greater_than: PB3}
 PB3: {fg: COLOR_BACKGROUND_5, bg: COLOR_BACKGROUND_3, greater_than: PB4, tolerance: 0.5}

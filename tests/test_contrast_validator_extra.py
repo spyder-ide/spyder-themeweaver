@@ -88,6 +88,100 @@ def test_validate_theme_greater_than_dependency_failure() -> None:
     assert "greater_than" in rules["B"]
 
 
+def test_validate_theme_greater_than_hex_suggestion() -> None:
+    rules = {
+        "A": {"fg": "FG", "bg": "BG", "min_ratio": 3},
+        "B": {"fg": "FG", "bg": "BG", "greater_than": "A"},
+    }
+
+    def _get(_colors, _rule, role):
+        return {"fg": "#111111", "bg": "#222222"}[role]
+
+    with (
+        patch("themeweaver.contrast.validator.load_rules", return_value=rules),
+        patch("themeweaver.contrast.validator.resolve_theme_colors", return_value={}),
+        patch("themeweaver.contrast.validator.get_color_for_rule", side_effect=_get),
+        patch(
+            "themeweaver.contrast.validator.contrast_ratio",
+            side_effect=[5.0, 4.0],
+        ),
+        patch(
+            "themeweaver.contrast.validator.adjust_for_contrast",
+            return_value="#CCCCCC",
+        ),
+    ):
+        result = validate_theme("t", "dark", include_suggestions=True)
+
+    r_by_id = {r.rule_id: r for r in result.results}
+    assert r_by_id["B"].passed is False
+    assert "Try FG: #CCCCCC" in (r_by_id["B"].suggestion or "")
+    assert "exceed A contrast (5.0)" in (r_by_id["B"].suggestion or "")
+
+
+def test_validate_theme_greater_than_fallback_suggestion() -> None:
+    rules = {
+        "A": {"fg": "FG", "bg": "BG", "min_ratio": 3},
+        "B": {"fg": "FG", "bg": "BG", "greater_than": "A", "tolerance": 0.2},
+    }
+
+    def _get(_colors, _rule, role):
+        return {"fg": "#111111", "bg": "#222222"}[role]
+
+    with (
+        patch("themeweaver.contrast.validator.load_rules", return_value=rules),
+        patch("themeweaver.contrast.validator.resolve_theme_colors", return_value={}),
+        patch("themeweaver.contrast.validator.get_color_for_rule", side_effect=_get),
+        patch(
+            "themeweaver.contrast.validator.contrast_ratio",
+            side_effect=[5.0, 4.0],
+        ),
+        patch(
+            "themeweaver.contrast.validator.adjust_for_contrast",
+            return_value="#111111",
+        ),
+    ):
+        result = validate_theme("t", "dark", include_suggestions=True)
+
+    r_by_id = {r.rule_id: r for r in result.results}
+    assert "Adjust FG or BG to increase contrast" in (r_by_id["B"].suggestion or "")
+    assert "need ratio > 4.8 vs A (5.0)" in (r_by_id["B"].suggestion or "")
+
+
+def test_validate_theme_min_ratio_suggestion_takes_priority_over_greater_than() -> None:
+    rules = {
+        "A": {"fg": "FG", "bg": "BG", "min_ratio": 3},
+        "B": {
+            "fg": "FG",
+            "bg": "BG",
+            "min_ratio": 7,
+            "greater_than": "A",
+        },
+    }
+
+    def _get(_colors, _rule, role):
+        return {"fg": "#111111", "bg": "#222222"}[role]
+
+    with (
+        patch("themeweaver.contrast.validator.load_rules", return_value=rules),
+        patch("themeweaver.contrast.validator.resolve_theme_colors", return_value={}),
+        patch("themeweaver.contrast.validator.get_color_for_rule", side_effect=_get),
+        patch(
+            "themeweaver.contrast.validator.contrast_ratio",
+            side_effect=[5.0, 4.0],
+        ),
+        patch(
+            "themeweaver.contrast.validator.adjust_for_contrast",
+            return_value="#DDDDDD",
+        ) as mock_adjust,
+    ):
+        result = validate_theme("t", "dark", include_suggestions=True)
+
+    r_by_id = {r.rule_id: r for r in result.results}
+    assert r_by_id["B"].passed is False
+    assert "to meet ratio 7" in (r_by_id["B"].suggestion or "")
+    mock_adjust.assert_called_once_with("#111111", "#222222", 7)
+
+
 def test_validate_theme_skips_none_rule_entry() -> None:
     with (
         patch(
@@ -216,6 +310,22 @@ def test_validate_theme_standard_max_ratio_failure() -> None:
         result = validate_theme("t", "dark", include_suggestions=False)
     assert result.failed_count == 1
     assert "> 3.0" in result.results[0].message
+
+
+def test_validate_theme_standard_max_ratio_suggestion() -> None:
+    rule = {"fg": "FG", "bg": "BG", "max_ratio": 3}
+    with (
+        patch("themeweaver.contrast.validator.load_rules", return_value={"R1": rule}),
+        patch("themeweaver.contrast.validator.resolve_theme_colors", return_value={}),
+        patch(
+            "themeweaver.contrast.validator.get_color_for_rule",
+            side_effect=["#111111", "#222222"],
+        ),
+        patch("themeweaver.contrast.validator.contrast_ratio", return_value=5.0),
+    ):
+        result = validate_theme("t", "dark", include_suggestions=True)
+    assert result.failed_count == 1
+    assert "reduce contrast" in (result.results[0].suggestion or "")
 
 
 def test_validate_theme_standard_min_ratio_fallback_suggestion() -> None:

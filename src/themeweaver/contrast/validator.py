@@ -46,6 +46,27 @@ def _round_ratio(ratio: float) -> float:
     return round(ratio, _CONTRAST_PRECISION)
 
 
+def _suggest_fg_contrast_increase(
+    *,
+    fg_name: str,
+    bg_name: str,
+    orig_fg: str,
+    bg_hex: str,
+    target_ratio: float,
+    ratio: float,
+    success_reason: str,
+    fallback_detail: str,
+) -> str:
+    """Build a hex or fallback suggestion to raise fg vs bg contrast."""
+    suggestion_hex = adjust_for_contrast(orig_fg, bg_hex, target_ratio)
+    if suggestion_hex and suggestion_hex.upper() != orig_fg.upper():
+        return f"Try {fg_name}: {suggestion_hex} (was {orig_fg}) {success_reason}"
+    return (
+        f"Adjust {fg_name} or {bg_name} to increase contrast "
+        f"({fallback_detail}, current ratio {ratio:.1f})"
+    )
+
+
 def _sort_rules_by_dependency(rules: Dict[str, Any]) -> List[str]:
     """Sort rule IDs so that referenced rules (greater_than) come first."""
     order: List[str] = []
@@ -217,6 +238,10 @@ def validate_theme(
         passed = True
         msg_parts = []
         failed_min = False
+        failed_max = False
+        failed_greater_than = False
+        ref_rule_id: Optional[str] = None
+        ref_rounded: Optional[float] = None
 
         tol = float(rule.get("tolerance", default_tolerance))
         min_ratio = float(rule["min_ratio"]) if "min_ratio" in rule else None
@@ -228,6 +253,7 @@ def validate_theme(
 
         if max_ratio is not None and ratio > max_ratio + tol:
             passed = False
+            failed_max = True
             msg_parts.append(f"{fg_name} vs {bg_name}: ratio {ratio:.1f} > {max_ratio}")
 
         if "greater_than" in rule:
@@ -236,30 +262,63 @@ def validate_theme(
                 ref_rounded = _round_ratio(ref_ratio)
                 if ratio < ref_rounded - tol:
                     passed = False
+                    failed_greater_than = True
+                    ref_rule_id = rule["greater_than"]
                     msg_parts.append(
                         f"{fg_name} vs {bg_name}: ratio {ratio:.1f} <= {rule['greater_than']} ({ref_rounded:.1f})"
                     )
 
         suggestion = None
-        if not passed and include_suggestions and failed_min:
-            if "fg_opacity" in rule:
-                alpha = rule["fg_opacity"]
-                suggestion = (
-                    f"Adjust {fg_name} (base color at {alpha:.0%} opacity) or opacity "
-                    f"to meet ratio {min_ratio} (blended ratio {ratio:.1f})"
-                )
-            else:
+        if not passed and include_suggestions:
+            if failed_min:
+                if "fg_opacity" in rule:
+                    alpha = rule["fg_opacity"]
+                    suggestion = (
+                        f"Adjust {fg_name} (base color at {alpha:.0%} opacity) or opacity "
+                        f"to meet ratio {min_ratio} (blended ratio {ratio:.1f})"
+                    )
+                else:
+                    orig_fg = get_color_for_rule(colors, rule, "fg")
+                    if orig_fg:
+                        min_r = rule["min_ratio"]
+                        suggestion = _suggest_fg_contrast_increase(
+                            fg_name=fg_name,
+                            bg_name=bg_name,
+                            orig_fg=orig_fg,
+                            bg_hex=bg_hex,
+                            target_ratio=min_r,
+                            ratio=ratio,
+                            success_reason=f"to meet ratio {min_r}",
+                            fallback_detail=f"ratio {ratio:.1f} < {min_ratio}",
+                        )
+            elif (
+                failed_greater_than
+                and ref_rule_id is not None
+                and ref_rounded is not None
+            ):
                 orig_fg = get_color_for_rule(colors, rule, "fg")
                 if orig_fg:
-                    min_r = rule["min_ratio"]
-                    suggestion_hex = adjust_for_contrast(orig_fg, bg_hex, min_r)
-                    if suggestion_hex and suggestion_hex.upper() != orig_fg.upper():
-                        suggestion = f"Try {fg_name}: {suggestion_hex} (was {orig_fg}) to meet ratio {min_r}"
-                    else:
-                        suggestion = (
-                            f"Adjust {fg_name} or {bg_name} to increase contrast "
-                            f"(ratio {ratio:.1f} < {min_ratio})"
-                        )
+                    target_ratio = ref_rounded - tol
+                    suggestion = _suggest_fg_contrast_increase(
+                        fg_name=fg_name,
+                        bg_name=bg_name,
+                        orig_fg=orig_fg,
+                        bg_hex=bg_hex,
+                        target_ratio=target_ratio,
+                        ratio=ratio,
+                        success_reason=(
+                            f"to exceed {ref_rule_id} contrast ({ref_rounded:.1f})"
+                        ),
+                        fallback_detail=(
+                            f"need ratio > {target_ratio:.1f} vs {ref_rule_id} "
+                            f"({ref_rounded:.1f})"
+                        ),
+                    )
+            elif failed_max and max_ratio is not None:
+                suggestion = (
+                    f"Adjust {fg_name} or {bg_name} to reduce contrast "
+                    f"(ratio {ratio:.1f} > {max_ratio})"
+                )
 
         results.append(
             RuleResult(
