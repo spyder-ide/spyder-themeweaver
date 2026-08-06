@@ -3,7 +3,7 @@ authors = [{name = "Andrés Conrado Montoya Acosta (@conradolandia)", email = "c
 dependencies = []
 name = "ThemeWeaver"
 requires-python = ">= 3.12"
-version = "0.4.2"
+version = "0.4.3"
 
 [build-system]
 build-backend = "hatchling.build"
@@ -12,9 +12,12 @@ requires = ["hatchling"]
 [tool.hatch.metadata]
 allow-direct-references = true
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/themeweaver/resources/help_css" = "themeweaver/resources/help_css"
+
 # Configuration for the generated spyder-themes Python package
 [tool.themeweaver.spyder-package]
-version = "1.0.5"
+version = "1.0.6"
 display_name = "Spyder Themes"
 description = "Collection of themes for Spyder IDE"
 authors = [

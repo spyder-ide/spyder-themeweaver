@@ -255,7 +255,7 @@ build-backend = "setuptools.build_meta"
 include = ["{self.package_name}*"]
 
 [tool.setuptools.package-data]
-"*" = ["**/*.qss", "**/*.qrc", "**/*.py", "**/*.yaml", "**/*.png", "**/*.svg"]
+"*" = ["**/*.qss", "**/*.css", "**/*.qrc", "**/*.py", "**/*.yaml", "**/*.png", "**/*.svg"]
 '''
 
         pyproject_path = package_dir / "pyproject.toml"

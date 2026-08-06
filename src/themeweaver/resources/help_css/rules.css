@@ -1,0 +1,620 @@
+/* --- General styles --- */
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: var(--page-margin);
+}
+
+/* --- Title style --- */
+div.title h1 {
+    font-size: 180%;
+    font-family: var(--font-title);
+    background-color: var(--header-bg-color-start);
+    background-image: -webkit-gradient(
+        linear,
+        0 0,
+        0 100%,
+        from(var(--header-bg-color-mid)),
+        color-stop(60%, var(--header-bg-color-end)),
+        to(var(--header-bg-color-to))
+    );
+    text-shadow: var(--title-text-shadow);
+    font-weight: normal;
+    padding: 6px 0px 6px 20px;
+    margin: 0px -25px;
+    color: var(--header-text-color);
+}
+
+/*
+ * The next two styles are needed to
+ * modify the anchors present on the
+ * title of pages like scipy.stats or
+ * scipy.io
+ */
+div.title h1 a {
+    color: transparent;
+    cursor: default;
+}
+
+div.title h1 tt {
+    font-size: 95%;
+    background-color: transparent;
+    color: var(--header-text-color);
+}
+
+
+/* --- Metadata style --- */
+div.metadata {
+    margin-top: 10px;
+    margin-bottom: 15px;
+    margin-right: 1px;
+    padding: 1px;
+    background-color: var(--surface-color);
+    color: var(--metadata-text-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--metadata-box-shadow);
+}
+
+div.metadata p {
+    margin: 7px 0px 7px 10px;
+}
+
+span.def {
+    font-family: monospace;
+    font-size: 90%;
+}
+
+span.argspec-highlight {
+    color: var(--argspec-highlight);
+    font-size: 110%;
+    font-weight: 900;
+}
+
+
+/* --- Docstring div style --- */
+div.docstring {
+    margin-top: -1px;
+}
+
+div.docstring p {
+    padding: 0px 2px 0px;
+}
+
+
+/* --- Headers style --- */
+h2, h3, h4 {
+    font-family: var(--font-heading);
+    color: var(--heading-color);
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+h2 {
+    font-size: 140%;
+    font-weight: normal;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 4px 0px 4px 0px;
+}
+
+h3 {
+    font-size: 115%;
+}
+
+h4 {
+    font-size: 100%;
+    margin-top: 14px;
+    font-weight: normal;
+}
+
+h2.html-toggle-button, h3.html-toggle-button, h4.html-toggle-button {
+    padding-left: 20px;
+}
+
+.collapsed > h2, .collapsed > h3, .collapsed > h4, .expanded > h2, .expanded > h3, .expanded > h4 {
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.collapsed > h2:before,
+.collapsed > h3:before,
+.collapsed > h4:before,
+.expanded > h2:before,
+.expanded > h3:before,
+.expanded > h4:before {
+    display: inline-block;
+    position: relative;
+    margin-right: 5px;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.4), rgba(0, 0, 0, 0.5)),
+      var(--collapse-expand-color);
+      -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.collapsed > h2:before,
+.collapsed > h3:before,
+.collapsed > h4:before {
+    content: "🞂";
+}
+
+.expanded > h2:before,
+.expanded > h3:before,
+.expanded > h4:before {
+    content: "🞃";
+}
+
+dl.docutils {
+    padding: 0px 10px 0px;
+}
+
+div.section p {
+    padding: 0px 2px 0px;
+}
+
+#warning {
+    margin-top: 5px;
+    background-color: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    padding: 4px 8px 4px 8px;
+    text-align: center;
+}
+
+#doc-warning {
+    margin-top: 16px;
+    width: 45%;
+    margin-left: auto;
+    margin-right: auto;
+    color: var(--doc-warning-text);
+    background-color: var(--doc-warning-bg);
+    border: 1px solid var(--doc-warning-border);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 105%;
+}
+
+
+/* --- Links --- */
+a {
+    text-decoration: none;
+    color: var(--link-color);
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+
+/* --- Images --- */
+img {
+    box-shadow: var(--img-box-shadow);
+    border: 1px solid var(--border-color);
+}
+
+img.align-center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* --- Lists style --- */
+ol.arabic {
+    margin-left: -10px;
+}
+
+ul {
+    margin-left: -5px;
+}
+
+/* --- Literal blocks style --- */
+pre.literal-block {
+    padding-left: 35px;
+    font-size: 95%;
+}
+
+
+/* --- Docutils table style --- */
+table.docutils {
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: var(--border-color);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    width: 90%;
+}
+
+table.docutils td {
+    padding: 0px 0px 0px 5px;
+}
+
+table.docutils tr.row-odd {
+    background-color: var(--surface-alt);
+}
+
+
+/* --- Docutils table headers --- */
+table.docutils th {
+    background-color: var(--surface-color);
+    border-bottom-color: var(--border-color);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-top-color: var(--border-color);
+    border-top-style: solid;
+    border-top-width: 1px;
+    font-weight: bold;
+    text-align: left;
+    padding: 0px 0px 0px 5px;
+    color: var(--table-th-color);
+}
+
+
+/* --- Field-list table style --- */
+table.docutils.field-list {
+    font-size: 80%;
+    border-collapse: collapse;
+    border-left: transparent;
+    border-right: transparent;
+    margin-top: 15px;
+    margin-left: 40px;
+    width: 83%;
+}
+
+
+/* --- Field-list table headers --- */
+table.docutils.field-list th {
+    background-color: transparent;
+    border-top: transparent;
+    border-bottom: transparent;
+    color: var(--field-list-th-color);
+    font-weight: bold;
+    text-align: left;
+    padding: 4px 0px 4px 8px;
+}
+
+
+/* --- Spacing around example code --- */
+
+div.highlight pre {
+    padding: 9px 14px;
+    background-color: var(--surface-alt);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-light);
+}
+
+div.highlight {
+    padding: 0px 10px 0px;
+    color: var(--highlight-text-color);
+}
+
+dt {
+    font-weight: bold;
+    /*font-size: 16px;*/
+}
+
+.classifier {
+    /*font-size: 10pt;*/
+    font-weight: normal;
+}
+
+/*
+ * --- Parameters ---
+ * Needed to provide a separator between a
+ * parameters name and its classifier with sphinx>=2
+ * See spyder-ide/spyder#9888
+ * Based on https://github.com/numpy/numpydoc/issues/215#issuecomment-529037079
+ */
+ .classifier:before {
+    font-style: normal;
+    margin: 0.2em;
+    content: ": ";
+}
+
+
+tt {
+    background-color: var(--code-bg);
+    /*font-size: 95%;*/
+    padding: 0px 1px;
+}
+
+
+
+div.admonition.note {
+    font-size: 0.95em;
+    margin: 1.3em;
+    border: 1px solid var(--note-border);
+    background-color: var(--note-bg);
+    padding: 0px 5px 0 5px;
+    color: var(--note-text);
+}
+
+div.admonition p.admonition-title {
+    font-size: 1em;
+    margin-top: 7px;
+    font-weight: bold;
+}
+
+
+/* ----------- Panels ----------- */
+
+.panel {
+    margin-top: 15px;
+    background-color: var(--background-color);
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+.panel-heading {
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+    border-top-right-radius: 3px;
+    border-top-left-radius: 3px;
+}
+
+.panel-title {
+    margin-top: 0;
+    margin-bottom: 0;
+    font-size: 110%;
+    color: var(--panel-title-color);
+}
+
+.panel-body {
+    padding: 15px;
+    background-color: var(--background-color);
+}
+
+.panel-usage {
+    border-color: var(--panel-accent);
+    margin-top: 15px;
+    width: 60%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.panel-usage > .panel-heading {
+    color: var(--header-text-color);
+    background-color: var(--panel-accent);
+    border-color: var(--panel-usage-heading-border);
+}
+
+.panel-usage > .panel-body > center > a {
+    color: var(--link-color);
+}
+
+.panel-usage > .panel-body > br {
+    display: block;
+    margin: 12px 0;
+    content: "";
+    background-color: var(--background-color);
+}
+
+.hr {
+    background-color: var(--border-color);
+    height: 1px;
+}
+
+
+/* ----------- IPython console styles ----------- */
+
+/* --- Loading --- */
+.loading {
+    position: absolute;
+    margin: -20px 0 0 -95px;
+    width: 180px;
+    height: auto;
+    left: 50%;
+    top: 50%;
+    background-color: var(--loading-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--loading-box-shadow);
+    color: var(--loading-text-color);
+    padding: 12px;
+    text-align: center;
+}
+
+#loading-image {
+    float: left;
+}
+
+#loading-message {
+    margin-left: 23px;
+}
+
+/* --- Kernel error messages --- */
+.panel-danger {
+    border-color: var(--danger-color);
+    background-color: var(--background-color);
+    color: var(--header-text-color);
+}
+
+.panel-danger > .panel-heading {
+    color: var(--header-text-color);
+    border-color: var(--danger-color);
+    background-color: var(--danger-color);
+}
+
+.panel-danger > .panel-body {
+    background-color: var(--background-color);
+}
+
+/* --- Scrollbar -- */
+
+::-webkit-scrollbar {
+    background-color: var(--background-color);
+    width: 14px;
+    height: 14px;
+    margin: 16px 2px 16px 2px;
+    border: 1px solid var(--surface-color);
+    border-radius: var(--border-radius);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border: 1px solid var(--surface-color);
+    min-height: 8px;
+    border-radius: 10px;
+    width: 1px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+    border: 1px solid var(--scrollbar-thumb-hover);
+    border-radius: 10px;
+    min-height: 8px;
+    width: 1px;
+}
+
+::-webkit-scrollbar-button:vertical:increment {
+    background-repeat: no-repeat;
+    background-image: var(--img-arrow-down-disabled);
+    background-position: center center;
+    background-size: 9px;
+}
+
+::-webkit-scrollbar-button:vertical:decrement {
+    background-repeat: no-repeat;
+    background-image: var(--img-arrow-up-disabled);
+    background-position: center center;
+    background-size: 9px;
+}
+
+::-webkit-scrollbar-button:vertical:increment:hover {
+    background-repeat: no-repeat;
+    background-image: var(--img-arrow-down);
+    background-position: center center;
+    background-size: 9px;
+}
+
+::-webkit-scrollbar-button:vertical:decrement:hover {
+    background-repeat: no-repeat;
+    background-image: var(--img-arrow-up);
+    background-position: center center;
+    background-size: 9px;
+}
+
+::-webkit-scrollbar-button:horizontal:increment {
+    background-repeat: no-repeat;
+    background-image: var(--img-arrow-right-disabled);
+    background-position: center center;
+    background-size: 9px;
+}
+
+::-webkit-scrollbar-button:horizontal:decrement {
+    background-repeat: no-repeat;
+    background-image: var(--img-arrow-left-disabled);
+    background-position: center center;
+    background-size: 9px;
+}
+
+::-webkit-scrollbar-button:horizontal:increment:hover {
+    background-repeat: no-repeat;
+    background-image: var(--img-arrow-right);
+    background-position: center center;
+    background-size: 9px;
+}
+
+::-webkit-scrollbar-button:horizontal:decrement:hover {
+    background-repeat: no-repeat;
+    background-image: var(--img-arrow-left);
+    background-position: center center;
+    background-size: 9px;
+}
+
+
+/* Pygments CSS */
+.hll { background-color: var(--syn-highlight-bg); }
+
+.c,  /* Comment */
+.c1  /* Comment.Single */
+{ color: var(--syn-comment); font-style: italic; }
+
+.cm { color: var(--syn-comment-multiline); font-style: italic; } /* Comment.Multiline */
+.cs { color: var(--syn-comment); background-color: var(--syn-comment-special-bg); } /* Comment.Special */
+.cp { color: var(--syn-preproc); } /* Comment.Preproc */
+
+.err { /* Error */
+    border: 1px solid var(--syn-error-border);
+    background-color: var(--syn-error-bg);
+}
+.gr { color: var(--syn-error); } /* Generic.Error */
+
+.k,  /* Keyword */
+.kc, /* Keyword.Constant */
+.kd, /* Keyword.Declaration */
+.kr  /* Keyword.Reserved */
+{ color: var(--syn-keyword); font-weight: bold; }
+
+.kn { color: var(--syn-keyword-namespace); font-weight: bold; } /* Keyword.Namespace */
+.kp { color: var(--syn-keyword); } /* Keyword.Pseudo */
+.kt { color: var(--syn-type); } /* Keyword.Type */
+
+.o { color: var(--syn-operator); } /* Operator */
+.ow { color: var(--syn-operator-word); font-weight: bold; } /* Operator.Word */
+
+.gd { color: var(--syn-deleted); } /* Generic.Deleted */
+.ge { font-style: italic; } /* Generic.Emph */
+.gh { color: var(--syn-heading); font-weight: bold; } /* Generic.Heading */
+.gi { color: var(--syn-inserted); } /* Generic.Inserted */
+.go { color: var(--syn-output); } /* Generic.Output */
+.gp { color: var(--syn-prompt); font-weight: bold; } /* Generic.Prompt */
+.gs { font-weight: bold; } /* Generic.Strong */
+.gu { color: var(--syn-subheading); font-weight: bold; } /* Generic.Subheading */
+.gt { color: var(--syn-traceback); } /* Generic.Traceback */
+
+.m,  /* Literal.Number */
+.mf, /* Literal.Number.Float */
+.mh, /* Literal.Number.Hex */
+.mi, /* Literal.Number.Integer */
+.mo, /* Literal.Number.Oct */
+.il  /* Literal.Number.Integer.Long */
+{ color: var(--syn-number); }
+
+.s,  /* Literal.String */
+.sh  /* Literal.String.Heredoc */
+{ color: var(--syn-string); }
+
+.sb, /* Literal.String.Backtick */
+.sc, /* Literal.String.Char */
+.s1, /* Literal.String.Single */
+.s2  /* Literal.String.Double */
+{ color: var(--syn-string-alt); }
+
+.sd { color: var(--syn-string-alt); font-style: italic; } /* Literal.String.Doc */
+.se { color: var(--syn-string-escape); font-weight: bold; } /* Literal.String.Escape */
+.si { color: var(--syn-string-interpol); font-style: italic; } /* Literal.String.Interpol */
+.sx { color: var(--syn-string-other); } /* Literal.String.Other */
+.sr { color: var(--syn-string-regex); } /* Literal.String.Regex */
+.ss { color: var(--syn-string-symbol); } /* Literal.String.Symbol */
+
+.na { color: var(--syn-attribute); } /* Name.Attribute */
+
+.nb, /* Name.Builtin */
+.bp  /* Name.Builtin.Pseudo */
+{ color: var(--syn-builtin); }
+
+.nc { color: var(--syn-class); font-weight: bold; } /* Name.Class */
+.nn { color: var(--syn-namespace); font-weight: bold; } /* Name.Namespace */
+.no { color: var(--syn-constant); } /* Name.Constant */
+.nd { color: var(--syn-decorator); font-weight: bold; } /* Name.Decorator */
+.ni { color: var(--syn-entity); font-weight: bold; } /* Name.Entity */
+.ne { color: var(--syn-exception); } /* Name.Exception */
+.nf { color: var(--syn-function); } /* Name.Function */
+.nl { color: var(--syn-label); font-weight: bold; } /* Name.Label */
+.nt { color: var(--syn-tag); font-weight: bold; } /* Name.Tag */
+
+.nv, /* Name.Variable */
+.vc, /* Name.Variable.Class */
+.vg, /* Name.Variable.Global */
+.vi  /* Name.Variable.Instance */
+{ color: var(--syn-variable); }
+
+.w { color: var(--syn-whitespace); } /* Text.Whitespace */

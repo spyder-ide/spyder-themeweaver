@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from themeweaver.core.colorsystem import load_theme_metadata_from_yaml
+from themeweaver.core.help_css_generator import write_default_css
 from themeweaver.core.palette import create_palettes
 from themeweaver.core.qdarkstyle_exporter import QDarkStyleAssetExporter
 from themeweaver.core.spyder_generator import SpyderFileGenerator
@@ -123,6 +124,7 @@ class ThemeExporter:
                 compile_for=compile_for,
                 generate_palette_images=generate_palette_images,
             )
+            write_default_css(variant_dir, variant, palette_class)
             exported_paths[variant] = variant_dir
 
         # Generate Spyder-compatible Python files
