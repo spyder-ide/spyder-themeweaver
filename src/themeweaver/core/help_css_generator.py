@@ -28,7 +28,7 @@ HELP_CSS_COLOR_MAP: Dict[str, str] = {
     "--danger-color": "COLOR_ERROR_2",
     "--warning-bg": "COLOR_WARN_2",
     "--warning-border": "COLOR_WARN_1",
-    "--argspec-highlight": "COLOR_ERROR_1",
+    "--argspec-highlight": "EDITOR_SYMBOL",
     "--border-color": "COLOR_BACKGROUND_4",
     "--border-subtle": "COLOR_BACKGROUND_2",
     "--border-light": "COLOR_BACKGROUND_1",
