@@ -10,10 +10,10 @@ import pytest
 from themeweaver.core.help_css_generator import (
     HEADER_TEXT_COLOR,
     HELP_CSS_COLOR_MAP,
+    HELP_CSS_STATIC,
     build_default_css,
-    load_root_template,
+    build_root,
     palette_hex,
-    resolve_root,
     write_default_css,
 )
 from themeweaver.core.palette import create_palettes
@@ -51,28 +51,34 @@ class TestPaletteHex:
             palette_hex(Pal, "COLOR_TEXT_2")
 
 
-class TestResolveRoot:
+class TestBuildRoot:
     def test_header_text_stays_white(self) -> None:
         palettes = create_palettes("spyder")
-        root = resolve_root(load_root_template("dark"), palettes.dark)
+        root = build_root(palettes.dark)
         assert _css_var_value(root, "--header-text-color") == HEADER_TEXT_COLOR
 
     def test_mapped_vars_match_palette(self) -> None:
         palettes = create_palettes("spyder")
         for variant, palette in (("dark", palettes.dark), ("light", palettes.light)):
-            root = resolve_root(load_root_template(variant), palette)
+            root = build_root(palette)
             for css_var, palette_key in HELP_CSS_COLOR_MAP.items():
                 expected = palette_hex(palette, palette_key)
                 assert _css_var_value(root, css_var) == expected, (
                     f"{variant} {css_var} should be {expected}"
                 )
 
-    def test_aliases_and_images_preserved(self) -> None:
+    def test_static_aliases_and_images(self) -> None:
         palettes = create_palettes("spyder")
-        root = resolve_root(load_root_template("dark"), palettes.dark)
-        assert _css_var_value(root, "--note-border") == "var(--note-bg)"
-        assert _css_var_value(root, "--syn-string-alt") == "var(--syn-prompt)"
-        assert _css_var_value(root, "--img-arrow-down") == "url(rc/arrow_down.png)"
+        root = build_root(palettes.dark)
+        assert _css_var_value(root, "--note-border") == HELP_CSS_STATIC["--note-border"]
+        assert (
+            _css_var_value(root, "--syn-string-alt")
+            == HELP_CSS_STATIC["--syn-string-alt"]
+        )
+        assert (
+            _css_var_value(root, "--img-arrow-down")
+            == HELP_CSS_STATIC["--img-arrow-down"]
+        )
 
 
 class TestBuildAndWrite:
@@ -82,6 +88,11 @@ class TestBuildAndWrite:
         assert ":root {" in css
         assert "body {" in css
         assert "div.title h1" in css
+
+    def test_invalid_variant(self) -> None:
+        palettes = create_palettes("spyder")
+        with pytest.raises(ValueError, match="Unsupported help CSS variant"):
+            build_default_css("sepia", palettes.dark)
 
     def test_write_default_css(self, tmp_path: Path) -> None:
         palettes = create_palettes("spyder")

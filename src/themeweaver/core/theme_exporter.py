@@ -152,6 +152,8 @@ class ThemeExporter:
     ) -> Dict[str, Dict[str, Path]]:
         """Export all available themes.
 
+        Stops on the first theme that fails to export.
+
         Args:
             cleanup_intermediate: Whether to remove intermediate files (SASS, redundant palette.py)
             compile_for: Qt binding target for compiled resource modules
@@ -159,15 +161,20 @@ class ThemeExporter:
 
         Returns:
             Dict mapping theme names to their variant export paths
+
+        Raises:
+            Exception: Re-raises the first export failure, with the theme name in the message.
         """
         exported_themes: Dict[str, Dict[str, Path]] = {}
 
-        # Find all theme directories
-        theme_dirs = [
-            d
-            for d in self.themes_dir.iterdir()
-            if d.is_dir() and not d.name.startswith(".")
-        ]
+        theme_dirs = sorted(
+            (
+                d
+                for d in self.themes_dir.iterdir()
+                if d.is_dir() and not d.name.startswith(".")
+            ),
+            key=lambda p: p.name,
+        )
 
         for theme_dir in theme_dirs:
             theme_name = theme_dir.name
@@ -179,6 +186,6 @@ class ThemeExporter:
                     generate_palette_images=generate_palette_images,
                 )
             except Exception as e:
-                _logger.error("❌ Failed to export theme '%s': %s", theme_name, e)
+                raise RuntimeError(f"Failed to export theme '{theme_name}': {e}") from e
 
         return exported_themes

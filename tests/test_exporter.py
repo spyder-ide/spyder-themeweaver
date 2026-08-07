@@ -170,3 +170,36 @@ class TestThemeExporter:
         """Test exporting with invalid variant name."""
         with pytest.raises(ValueError, match="Variant 'invalid_variant' not supported"):
             fresh_exporter.export_theme("spyder", variants=["dark", "invalid_variant"])
+
+    def test_export_all_themes_stops_on_first_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """export_all_themes must not swallow per-theme errors."""
+        build_dir = tmp_path / "build"
+        build_dir.mkdir()
+        exporter = ThemeExporter(build_dir=build_dir)
+
+        calls: list[str] = []
+
+        def fake_export_theme(theme_name: str, *args: Any, **kwargs: Any) -> dict:
+            calls.append(theme_name)
+            if theme_name == "inkpot":
+                raise AttributeError(
+                    "Palette 'DarkPalette' has no attribute 'COLOR_ERROR_5'"
+                )
+            return {"dark": build_dir / theme_name / "dark"}
+
+        monkeypatch.setattr(exporter, "export_theme", fake_export_theme)
+
+        # Deterministic discovery order via sorted names in export_all_themes
+        with pytest.raises(
+            RuntimeError, match="Failed to export theme 'inkpot'"
+        ) as exc:
+            exporter.export_all_themes()
+
+        assert isinstance(exc.value.__cause__, AttributeError)
+        assert "inkpot" in calls
+        # Themes after inkpot alphabetically must not have been attempted
+        assert "miami-nights" not in calls
+        assert "spyder" not in calls
+        assert "zenburn" not in calls

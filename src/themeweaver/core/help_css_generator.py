@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import logging
-import re
 from pathlib import Path
-from typing import Any, Dict, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 _logger = logging.getLogger(__name__)
 
-HEADER_TEXT_COLOR = "#FFFFFF"
-
+# CSS custom property -> palette attribute (hex, or editor (color, bold, italic)).
 HELP_CSS_COLOR_MAP: Dict[str, str] = {
     "--background-color": "COLOR_BACKGROUND_1",
     "--surface-color": "COLOR_BACKGROUND_3",
@@ -51,20 +49,191 @@ HELP_CSS_COLOR_MAP: Dict[str, str] = {
     "--syn-string": "EDITOR_STRING",
 }
 
-# Match a CSS custom property whose value is a hex color (optional trailing comment).
-_HEX_PROP_RE = re.compile(
-    r"(?P<prefix>^\s*(?P<name>--[\w-]+)\s*:\s*)"
-    r"(?P<hex>#[0-9A-Fa-f]{3,8})"
-    r"(?P<suffix>\s*;.*)$",
-    re.MULTILINE,
-)
+# Non-palette :root values (aliases, literals, images). Shared by dark and light.
+HELP_CSS_STATIC: Dict[str, str] = {
+    "--note-border": "var(--note-bg)",
+    "--note-text": "var(--text-color)",
+    "--loading-bg": "var(--surface-color)",
+    "--loading-box-shadow": "none",
+    "--header-text-color": "#FFFFFF",
+    "--field-list-th-color": "var(--text-color)",
+    "--metadata-box-shadow": "none",
+    "--table-th-color": "var(--text-color)",
+    "--panel-title-color": "var(--header-text-color)",
+    "--header-bg-color-to": "var(--header-bg-color-end)",
+    "--doc-warning-bg": "var(--warning-bg)",
+    "--doc-warning-border": "var(--warning-border)",
+    "--doc-warning-text": "var(--header-text-color)",
+    "--collapse-expand-color": "var(--link-color)",
+    "--panel-accent": "var(--header-bg-color-end)",
+    "--panel-usage-heading-border": "var(--background-color)",
+    "--border-radius": "4px",
+    "--border-radius-lg": "6px",
+    "--box-shadow": "0 1px 1px rgba(0, 0, 0, 0.05)",
+    "--title-text-shadow": "0px 1px 1px rgba(0, 0, 0, 0.2)",
+    "--img-box-shadow": "0px 2px 6px var(--img-shadow-color)",
+    "--page-margin": "0px 25px 15px 25px",
+    "--font-title": "'Trebuchet MS', sans-serif",
+    "--font-heading": "'Helvetica', sans-serif",
+    "--img-arrow-down": "url(rc/arrow_down.png)",
+    "--img-arrow-down-disabled": "url(rc/arrow_down_disabled.png)",
+    "--img-arrow-up": "url(rc/arrow_up.png)",
+    "--img-arrow-up-disabled": "url(rc/arrow_up_disabled.png)",
+    "--img-arrow-left": "url(rc/arrow_left.png)",
+    "--img-arrow-left-disabled": "url(rc/arrow_left_disabled.png)",
+    "--img-arrow-right": "url(rc/arrow_right.png)",
+    "--img-arrow-right-disabled": "url(rc/arrow_right_disabled.png)",
+    "--syn-string-alt": "var(--syn-prompt)",
+    "--syn-comment-multiline": "var(--syn-comment)",
+    "--syn-preproc": "var(--syn-comment)",
+    "--syn-subheading": "var(--syn-comment)",
+    "--syn-error-border": "var(--syn-error)",
+    "--syn-heading": "var(--syn-fg)",
+    "--syn-output": "var(--syn-fg)",
+    "--syn-traceback": "var(--syn-fg)",
+    "--syn-entity": "var(--syn-fg)",
+    "--syn-label": "var(--syn-fg)",
+    "--syn-variable": "var(--syn-fg)",
+    "--syn-whitespace": "var(--syn-fg)",
+    "--syn-builtin": "var(--syn-fg)",
+    "--syn-type": "var(--syn-keyword)",
+    "--syn-constant": "var(--syn-keyword)",
+    "--syn-keyword-namespace": "var(--syn-operator)",
+    "--syn-operator-word": "var(--syn-operator)",
+    "--syn-deleted": "var(--syn-operator)",
+    "--syn-tag": "var(--syn-operator)",
+    "--syn-class": "var(--syn-inserted)",
+    "--syn-decorator": "var(--syn-inserted)",
+    "--syn-function": "var(--syn-inserted)",
+    "--syn-attribute": "var(--syn-inserted)",
+    "--syn-exception": "var(--syn-inserted)",
+    "--syn-namespace": "var(--syn-prompt)",
+    "--syn-string-escape": "var(--syn-number)",
+    "--syn-string-interpol": "var(--syn-string-alt)",
+    "--syn-string-other": "var(--syn-string-alt)",
+    "--syn-string-regex": "var(--syn-string-alt)",
+    "--syn-string-symbol": "var(--syn-string-alt)",
+}
+
+# Emission order and optional section comments for the generated :root block.
+_ROOT_SECTIONS: List[Tuple[str, List[str]]] = [
+    (
+        "Main colors",
+        [
+            "--background-color",
+            "--surface-color",
+            "--surface-alt",
+            "--code-bg",
+            "--note-bg",
+            "--note-border",
+            "--note-text",
+            "--loading-bg",
+            "--loading-box-shadow",
+            "--text-color",
+            "--header-text-color",
+            "--heading-color",
+            "--highlight-text-color",
+            "--loading-text-color",
+            "--field-list-th-color",
+            "--metadata-text-color",
+            "--metadata-box-shadow",
+            "--table-th-color",
+            "--panel-title-color",
+            "--header-bg-color-start",
+            "--header-bg-color-mid",
+            "--header-bg-color-end",
+            "--header-bg-color-to",
+            "--link-color",
+            "--hover-color",
+            "--danger-color",
+            "--warning-bg",
+            "--warning-border",
+            "--doc-warning-bg",
+            "--doc-warning-border",
+            "--doc-warning-text",
+            "--argspec-highlight",
+            "--collapse-expand-color",
+            "--panel-accent",
+            "--panel-usage-heading-border",
+            "--border-color",
+            "--border-subtle",
+            "--border-light",
+            "--img-shadow-color",
+            "--scrollbar-thumb",
+            "--scrollbar-thumb-hover",
+            "--border-radius",
+            "--border-radius-lg",
+            "--box-shadow",
+            "--title-text-shadow",
+            "--img-box-shadow",
+            "--page-margin",
+            "--font-title",
+            "--font-heading",
+        ],
+    ),
+    (
+        "Images (filenames match theme rc/)",
+        [
+            "--img-arrow-down",
+            "--img-arrow-down-disabled",
+            "--img-arrow-up",
+            "--img-arrow-up-disabled",
+            "--img-arrow-left",
+            "--img-arrow-left-disabled",
+            "--img-arrow-right",
+            "--img-arrow-right-disabled",
+        ],
+    ),
+    (
+        "Syntax (Pygments)",
+        [
+            "--syn-highlight-bg",
+            "--syn-fg",
+            "--syn-comment",
+            "--syn-comment-special-bg",
+            "--syn-error",
+            "--syn-error-bg",
+            "--syn-keyword",
+            "--syn-operator",
+            "--syn-inserted",
+            "--syn-prompt",
+            "--syn-number",
+            "--syn-string",
+            "--syn-string-alt",
+            "--syn-comment-multiline",
+            "--syn-preproc",
+            "--syn-subheading",
+            "--syn-error-border",
+            "--syn-heading",
+            "--syn-output",
+            "--syn-traceback",
+            "--syn-entity",
+            "--syn-label",
+            "--syn-variable",
+            "--syn-whitespace",
+            "--syn-builtin",
+            "--syn-type",
+            "--syn-constant",
+            "--syn-keyword-namespace",
+            "--syn-operator-word",
+            "--syn-deleted",
+            "--syn-tag",
+            "--syn-class",
+            "--syn-decorator",
+            "--syn-function",
+            "--syn-attribute",
+            "--syn-exception",
+            "--syn-namespace",
+            "--syn-string-escape",
+            "--syn-string-interpol",
+            "--syn-string-other",
+            "--syn-string-regex",
+            "--syn-string-symbol",
+        ],
+    ),
+]
 
 _RESOURCES_DIR = Path(__file__).resolve().parent.parent / "resources" / "help_css"
-
-
-def _resources_dir() -> Path:
-    """Return the directory containing help CSS templates."""
-    return _RESOURCES_DIR
 
 
 def palette_hex(palette_class: Type[Any], key: str) -> str:
@@ -84,35 +253,41 @@ def palette_hex(palette_class: Type[Any], key: str) -> str:
     return value
 
 
-def resolve_root(template_text: str, palette_class: Type[Any]) -> str:
-    """Fill mapped hex properties in a ``:root`` template from the palette."""
-
-    def _replace(match: re.Match[str]) -> str:
-        name = match.group("name")
-        if name == "--header-text-color":
-            return f"{match.group('prefix')}{HEADER_TEXT_COLOR}{match.group('suffix')}"
-        palette_key = HELP_CSS_COLOR_MAP.get(name)
-        if palette_key is None:
-            return match.group(0)
-        hex_value = palette_hex(palette_class, palette_key)
-        return f"{match.group('prefix')}{hex_value}{match.group('suffix')}"
-
-    return _HEX_PROP_RE.sub(_replace, template_text)
+def resolve_root_values(palette_class: Type[Any]) -> Dict[str, str]:
+    """Resolve all ``:root`` custom properties for a palette."""
+    values: Dict[str, str] = dict(HELP_CSS_STATIC)
+    for css_var, palette_key in HELP_CSS_COLOR_MAP.items():
+        values[css_var] = palette_hex(palette_class, palette_key)
+    return values
 
 
-def load_root_template(variant: str) -> str:
-    """Load the packaged ``:root`` template for ``dark`` or ``light``."""
-    if variant not in ("dark", "light"):
-        raise ValueError(f"Unsupported help CSS variant: {variant!r}")
-    path = _resources_dir() / f"root_{variant}.css"
-    if not path.is_file():
-        raise FileNotFoundError(f"Help CSS root template not found: {path}")
-    return path.read_text(encoding="utf-8")
+def format_root(values: Dict[str, str]) -> str:
+    """Format resolved values as a ``:root { ... }`` CSS block."""
+    lines = [
+        "/* Spyder help CSS */",
+        "/* Generated by ThemeWeaver from the theme palette. */",
+        "",
+        ":root {",
+    ]
+    for comment, names in _ROOT_SECTIONS:
+        if comment:
+            lines.append("")
+            lines.append(f"    /* --- {comment} --- */")
+        for name in names:
+            lines.append(f"    {name}: {values[name]};")
+    lines.append("}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def build_root(palette_class: Type[Any]) -> str:
+    """Build the ``:root`` block from palette-mapped and static values."""
+    return format_root(resolve_root_values(palette_class))
 
 
 def load_rules() -> str:
     """Load the shared help CSS rules (no ``:root``)."""
-    path = _resources_dir() / "rules.css"
+    path = _RESOURCES_DIR / "rules.css"
     if not path.is_file():
         raise FileNotFoundError(f"Help CSS rules template not found: {path}")
     return path.read_text(encoding="utf-8")
@@ -120,7 +295,9 @@ def load_rules() -> str:
 
 def build_default_css(variant: str, palette_class: Type[Any]) -> str:
     """Build the full ``default.css`` content for a theme variant."""
-    root = resolve_root(load_root_template(variant), palette_class).rstrip()
+    if variant not in ("dark", "light"):
+        raise ValueError(f"Unsupported help CSS variant: {variant!r}")
+    root = build_root(palette_class).rstrip()
     rules = load_rules().lstrip()
     if not root.endswith("\n"):
         root += "\n"
