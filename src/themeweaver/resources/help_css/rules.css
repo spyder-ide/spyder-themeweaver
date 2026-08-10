@@ -459,7 +459,6 @@ div.admonition p.admonition-title {
 
 ::-webkit-scrollbar-thumb {
     background-color: var(--scrollbar-thumb);
-    border: 1px solid var(--background-color);
     border-radius: 6px;
     min-height: 8px;
     width: 1px;
@@ -467,7 +466,6 @@ div.admonition p.admonition-title {
 
 ::-webkit-scrollbar-thumb:hover {
     background-color: var(--scrollbar-thumb-hover);
-    border: 1px solid var(--scrollbar-thumb-hover);
     border-radius: 6px;
     min-height: 8px;
     width: 1px;
