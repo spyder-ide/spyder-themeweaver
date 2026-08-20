@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from themeweaver.core.help_css_generator import (
-    HELP_CSS_COLOR_MAP,
+from themeweaver.core.css_generator import (
+    CSS_COLOR_MAP,
     HELP_CSS_STATIC,
     build_default_css,
     build_root,
@@ -78,7 +78,7 @@ class TestBuildRoot:
         palettes = create_palettes("spyder")
         for variant, palette in (("dark", palettes.dark), ("light", palettes.light)):
             root = build_root(palette, variant)
-            for css_var, spec in HELP_CSS_COLOR_MAP.items():
+            for css_var, spec in CSS_COLOR_MAP.items():
                 palette_key = resolve_palette_key(spec, variant)
                 expected = palette_hex(palette, palette_key)
                 assert _css_var_value(root, css_var) == expected, (
@@ -87,7 +87,7 @@ class TestBuildRoot:
 
     def test_variant_specific_mapping(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setitem(
-            HELP_CSS_COLOR_MAP,
+            CSS_COLOR_MAP,
             "--header-text-color",
             {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"},
         )
@@ -147,7 +147,7 @@ class TestExportIntegration:
             text = css_path.read_text(encoding="utf-8")
             palette = create_palettes("spyder").get_palette(variant)
             assert palette is not None
-            for css_var, spec in HELP_CSS_COLOR_MAP.items():
+            for css_var, spec in CSS_COLOR_MAP.items():
                 palette_key = resolve_palette_key(spec, variant)
                 assert _css_var_value(text, css_var) == palette_hex(
                     palette, palette_key
@@ -165,7 +165,7 @@ class TestExportIntegration:
         palette = create_palettes(theme_name).dark
         spyder_palette = create_palettes("spyder").dark
         differed = False
-        for css_var, spec in HELP_CSS_COLOR_MAP.items():
+        for css_var, spec in CSS_COLOR_MAP.items():
             palette_key = resolve_palette_key(spec, "dark")
             theme_hex = palette_hex(palette, palette_key)
             assert _css_var_value(text, css_var) == theme_hex

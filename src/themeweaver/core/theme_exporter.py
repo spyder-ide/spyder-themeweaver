@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from themeweaver.core.colorsystem import load_theme_metadata_from_yaml
-from themeweaver.core.help_css_generator import write_default_css
+from themeweaver.core.css_generator import write_default_css
 from themeweaver.core.palette import create_palettes
 from themeweaver.core.qdarkstyle_exporter import QDarkStyleAssetExporter
 from themeweaver.core.spyder_generator import SpyderFileGenerator

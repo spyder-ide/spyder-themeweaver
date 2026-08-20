@@ -11,8 +11,8 @@ _logger = logging.getLogger(__name__)
 # CSS custom property -> palette attribute (hex, or editor (color, bold, italic)).
 # A string applies to both variants. A mapping must include both "dark" and "light".
 # Example: "--header-text-color": {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"}
-HelpCssColorSpec = Union[str, Mapping[str, str]]
-HELP_CSS_COLOR_MAP: Dict[str, HelpCssColorSpec] = {
+CssColorSpec = Union[str, Mapping[str, str]]
+CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--background-color": "COLOR_BACKGROUND_1",
     "--surface-color": "COLOR_BACKGROUND_3",
     "--surface-alt": "COLOR_BACKGROUND_4",
@@ -233,7 +233,7 @@ _ROOT_SECTIONS: List[Tuple[str, List[str]]] = [
 _RESOURCES_DIR = Path(__file__).resolve().parent.parent / "resources" / "help_css"
 
 
-def resolve_palette_key(spec: HelpCssColorSpec, variant: str) -> str:
+def resolve_palette_key(spec: CssColorSpec, variant: str) -> str:
     """Return the palette attribute name for a help CSS color spec and variant."""
     if isinstance(spec, str):
         return spec
@@ -270,7 +270,7 @@ def palette_hex(palette_class: Type[Any], key: str) -> str:
 def resolve_root_values(palette_class: Type[Any], variant: str) -> Dict[str, str]:
     """Resolve all ``:root`` custom properties for a palette and variant."""
     values: Dict[str, str] = dict(HELP_CSS_STATIC)
-    for css_var, spec in HELP_CSS_COLOR_MAP.items():
+    for css_var, spec in CSS_COLOR_MAP.items():
         palette_key = resolve_palette_key(spec, variant)
         values[css_var] = palette_hex(palette_class, palette_key)
     return values

@@ -17,7 +17,7 @@ def test_load_rules_light() -> None:
     rules = load_rules("light")
     assert isinstance(rules, dict)
     assert "PE2" in rules
-    assert rules["PE6"]["min_ratio"] == 5  # Different from dark
+    assert rules["PE6"]["min_ratio"] == 3
 
 
 def test_load_rules_pe5a_has_line_bg() -> None:

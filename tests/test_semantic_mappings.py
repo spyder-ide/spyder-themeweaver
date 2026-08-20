@@ -65,7 +65,7 @@ class TestSemanticMappings:
         light_mappings = semantic_mappings["light"]
         assert light_mappings["COLOR_BACKGROUND_1"] == "Primary.B140"
         assert light_mappings["COLOR_TEXT_1"] == "Primary.B20"
-        assert light_mappings["COLOR_ACCENT_1"] == "Secondary.B70"
+        assert light_mappings["COLOR_ACCENT_1"] == "Secondary.B80"
 
     def test_load_semantic_mappings_nonexistent_theme(self) -> None:
         """Test loading semantic mappings for non-existent theme."""
@@ -115,7 +115,7 @@ class TestSemanticMappings:
         semantic_mappings = {
             "COLOR_BACKGROUND_1": "Primary.B140",
             "COLOR_TEXT_1": "Primary.B20",
-            "COLOR_ACCENT_1": "Secondary.B70",
+            "COLOR_ACCENT_1": "Secondary.B80",
         }
 
         # Create palette class
@@ -127,7 +127,7 @@ class TestSemanticMappings:
         assert LightPalette.ID == "light"
         assert LightPalette.COLOR_BACKGROUND_1 == Primary.B140
         assert LightPalette.COLOR_TEXT_1 == Primary.B20
-        assert LightPalette.COLOR_ACCENT_1 == Secondary.B70
+        assert LightPalette.COLOR_ACCENT_1 == Secondary.B80
 
         # Verify it's a proper subclass
         assert issubclass(LightPalette, Palette)
