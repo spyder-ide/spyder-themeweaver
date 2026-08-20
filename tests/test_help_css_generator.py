@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 
 from themeweaver.core.help_css_generator import (
-    HEADER_TEXT_COLOR,
     HELP_CSS_COLOR_MAP,
     HELP_CSS_STATIC,
     build_default_css,
     build_root,
     palette_hex,
+    resolve_palette_key,
     write_default_css,
 )
 from themeweaver.core.palette import create_palettes
@@ -51,25 +51,59 @@ class TestPaletteHex:
             palette_hex(Pal, "COLOR_TEXT_2")
 
 
-class TestBuildRoot:
-    def test_header_text_stays_white(self) -> None:
-        palettes = create_palettes("spyder")
-        root = build_root(palettes.dark)
-        assert _css_var_value(root, "--header-text-color") == HEADER_TEXT_COLOR
+class TestResolvePaletteKey:
+    def test_string_applies_to_both_variants(self) -> None:
+        assert resolve_palette_key("COLOR_TEXT_1", "dark") == "COLOR_TEXT_1"
+        assert resolve_palette_key("COLOR_TEXT_1", "light") == "COLOR_TEXT_1"
 
+    def test_mapping_picks_variant(self) -> None:
+        spec = {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"}
+        assert resolve_palette_key(spec, "dark") == "COLOR_TEXT_1"
+        assert resolve_palette_key(spec, "light") == "COLOR_BACKGROUND_1"
+
+    def test_mapping_missing_variant(self) -> None:
+        with pytest.raises(KeyError, match="missing 'light'"):
+            resolve_palette_key({"dark": "COLOR_TEXT_1"}, "light")
+
+    def test_mapping_unknown_key(self) -> None:
+        with pytest.raises(ValueError, match="unknown variant keys"):
+            resolve_palette_key(
+                {"dark": "COLOR_TEXT_1", "light": "COLOR_TEXT_1", "sepia": "X"},
+                "dark",
+            )
+
+
+class TestBuildRoot:
     def test_mapped_vars_match_palette(self) -> None:
         palettes = create_palettes("spyder")
         for variant, palette in (("dark", palettes.dark), ("light", palettes.light)):
-            root = build_root(palette)
-            for css_var, palette_key in HELP_CSS_COLOR_MAP.items():
+            root = build_root(palette, variant)
+            for css_var, spec in HELP_CSS_COLOR_MAP.items():
+                palette_key = resolve_palette_key(spec, variant)
                 expected = palette_hex(palette, palette_key)
                 assert _css_var_value(root, css_var) == expected, (
                     f"{variant} {css_var} should be {expected}"
                 )
 
+    def test_variant_specific_mapping(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setitem(
+            HELP_CSS_COLOR_MAP,
+            "--header-text-color",
+            {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"},
+        )
+        palettes = create_palettes("spyder")
+        dark_root = build_root(palettes.dark, "dark")
+        light_root = build_root(palettes.light, "light")
+        assert _css_var_value(dark_root, "--header-text-color") == palette_hex(
+            palettes.dark, "COLOR_TEXT_1"
+        )
+        assert _css_var_value(light_root, "--header-text-color") == palette_hex(
+            palettes.light, "COLOR_BACKGROUND_1"
+        )
+
     def test_static_aliases_and_images(self) -> None:
         palettes = create_palettes("spyder")
-        root = build_root(palettes.dark)
+        root = build_root(palettes.dark, "dark")
         assert _css_var_value(root, "--note-border") == HELP_CSS_STATIC["--note-border"]
         assert (
             _css_var_value(root, "--syn-string-alt")
@@ -113,11 +147,11 @@ class TestExportIntegration:
             text = css_path.read_text(encoding="utf-8")
             palette = create_palettes("spyder").get_palette(variant)
             assert palette is not None
-            for css_var, palette_key in HELP_CSS_COLOR_MAP.items():
+            for css_var, spec in HELP_CSS_COLOR_MAP.items():
+                palette_key = resolve_palette_key(spec, variant)
                 assert _css_var_value(text, css_var) == palette_hex(
                     palette, palette_key
                 )
-            assert _css_var_value(text, "--header-text-color") == HEADER_TEXT_COLOR
             assert "url(rc/arrow_down.png)" in text
             assert "body {" in text
 
@@ -131,7 +165,8 @@ class TestExportIntegration:
         palette = create_palettes(theme_name).dark
         spyder_palette = create_palettes("spyder").dark
         differed = False
-        for css_var, palette_key in HELP_CSS_COLOR_MAP.items():
+        for css_var, spec in HELP_CSS_COLOR_MAP.items():
+            palette_key = resolve_palette_key(spec, "dark")
             theme_hex = palette_hex(palette, palette_key)
             assert _css_var_value(text, css_var) == theme_hex
             if theme_hex != palette_hex(spyder_palette, palette_key):

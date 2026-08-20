@@ -4,39 +4,42 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Any, Dict, List, Mapping, Tuple, Type, Union
 
 _logger = logging.getLogger(__name__)
 
 # CSS custom property -> palette attribute (hex, or editor (color, bold, italic)).
-HELP_CSS_COLOR_MAP: Dict[str, str] = {
+# A string applies to both variants. A mapping must include both "dark" and "light".
+# Example: "--header-text-color": {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"}
+HelpCssColorSpec = Union[str, Mapping[str, str]]
+HELP_CSS_COLOR_MAP: Dict[str, HelpCssColorSpec] = {
     "--background-color": "COLOR_BACKGROUND_1",
     "--surface-color": "COLOR_BACKGROUND_3",
-    "--surface-alt": "COLOR_BACKGROUND_2",
-    "--code-bg": "COLOR_BACKGROUND_5",
-    "--note-bg": "COLOR_HIGHLIGHT_1",
-    "--text-color": "COLOR_TEXT_2",
-    "--heading-color": "COLOR_ACCENT_5",
-    "--highlight-text-color": "COLOR_TEXT_2",
-    "--loading-text-color": "COLOR_TEXT_2",
-    "--metadata-text-color": "COLOR_TEXT_2",
-    "--header-bg-color-start": "COLOR_ACCENT_5",
-    "--header-bg-color-mid": "COLOR_ACCENT_4",
-    "--header-bg-color-end": "COLOR_ACCENT_3",
+    "--surface-alt": "COLOR_BACKGROUND_4",
+    "--code-bg": "COLOR_BACKGROUND_2",
+    "--note-bg": {"dark": "COLOR_HIGHLIGHT_1", "light": "COLOR_ACCENT_1"},
+    "--text-color": "COLOR_TEXT_1",
+    "--heading-color": "COLOR_TEXT_3",
+    "--highlight-text-color": "COLOR_TEXT_1",
+    "--loading-text-color": "COLOR_TEXT_1",
+    "--metadata-text-color": "COLOR_TEXT_1",
+    "--header-bg-color": {"dark": "COLOR_ACCENT_1", "light": "SPECIAL_TABS_SELECTED"},
+    "--header-text-color": {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"},
     "--link-color": "COLOR_ACCENT_5",
-    "--hover-color": "COLOR_ACCENT_4",
+    "--hover-color": "COLOR_ACCENT_3",
     "--danger-color": "COLOR_ERROR_2",
     "--warning-bg": "COLOR_WARN_2",
     "--warning-border": "COLOR_WARN_1",
     "--argspec-highlight": "EDITOR_SYMBOL",
-    "--border-color": "COLOR_BACKGROUND_4",
-    "--border-subtle": "COLOR_BACKGROUND_2",
-    "--border-light": "COLOR_BACKGROUND_1",
+    "--border-color": "COLOR_BACKGROUND_5",
+    "--border-subtle": "COLOR_BACKGROUND_4",
+    "--border-light": "COLOR_BACKGROUND_2",
     "--img-shadow-color": "COLOR_BACKGROUND_4",
     "--scrollbar-thumb": "COLOR_DISABLED",
     "--scrollbar-thumb-hover": "SPECIAL_TABS_SELECTED",
     "--syn-highlight-bg": "EDITOR_CURRENTCELL",
     "--syn-fg": "EDITOR_NORMAL",
+    "--syn-builtin": "EDITOR_BUILTIN",
     "--syn-comment": "EDITOR_COMMENT",
     "--syn-comment-special-bg": "EDITOR_CURRENTLINE",
     "--syn-error": "COLOR_ERROR_1",
@@ -44,33 +47,30 @@ HELP_CSS_COLOR_MAP: Dict[str, str] = {
     "--syn-keyword": "EDITOR_KEYWORD",
     "--syn-operator": "EDITOR_SYMBOL",
     "--syn-inserted": "EDITOR_DEFINITION",
-    "--syn-prompt": "EDITOR_BUILTIN",
+    "--syn-prompt": "EDITOR_STRING",
     "--syn-number": "EDITOR_NUMBER",
     "--syn-string": "EDITOR_STRING",
 }
 
 # Non-palette :root values (aliases, literals, images). Shared by dark and light.
 HELP_CSS_STATIC: Dict[str, str] = {
-    "--note-border": "var(--note-bg)",
+    "--note-border": "var(--border-light)",
     "--note-text": "var(--text-color)",
     "--loading-bg": "var(--surface-color)",
     "--loading-box-shadow": "none",
-    "--header-text-color": "#FFFFFF",
     "--field-list-th-color": "var(--text-color)",
     "--metadata-box-shadow": "none",
     "--table-th-color": "var(--text-color)",
     "--panel-title-color": "var(--header-text-color)",
-    "--header-bg-color-to": "var(--header-bg-color-end)",
     "--doc-warning-bg": "var(--warning-bg)",
     "--doc-warning-border": "var(--warning-border)",
     "--doc-warning-text": "var(--header-text-color)",
     "--collapse-expand-color": "var(--link-color)",
-    "--panel-accent": "var(--header-bg-color-end)",
+    "--panel-accent": "var(--header-bg-color)",
     "--panel-usage-heading-border": "var(--background-color)",
     "--border-radius": "4px",
     "--border-radius-lg": "6px",
     "--box-shadow": "0 1px 1px rgba(0, 0, 0, 0.05)",
-    "--title-text-shadow": "0px 1px 1px rgba(0, 0, 0, 0.2)",
     "--img-box-shadow": "0px 2px 6px var(--img-shadow-color)",
     "--page-margin": "0px 25px 15px 25px",
     "--font-title": "'Trebuchet MS', sans-serif",
@@ -95,10 +95,10 @@ HELP_CSS_STATIC: Dict[str, str] = {
     "--syn-label": "var(--syn-fg)",
     "--syn-variable": "var(--syn-fg)",
     "--syn-whitespace": "var(--syn-fg)",
-    "--syn-builtin": "var(--syn-fg)",
+    "--syn-builtin": "var(--syn-builtin)",
     "--syn-type": "var(--syn-keyword)",
     "--syn-constant": "var(--syn-keyword)",
-    "--syn-keyword-namespace": "var(--syn-operator)",
+    "--syn-keyword-namespace": "var(--syn-keyword)",
     "--syn-operator-word": "var(--syn-operator)",
     "--syn-deleted": "var(--syn-operator)",
     "--syn-tag": "var(--syn-operator)",
@@ -107,7 +107,7 @@ HELP_CSS_STATIC: Dict[str, str] = {
     "--syn-function": "var(--syn-inserted)",
     "--syn-attribute": "var(--syn-inserted)",
     "--syn-exception": "var(--syn-inserted)",
-    "--syn-namespace": "var(--syn-prompt)",
+    "--syn-namespace": "var(--syn-fg)",
     "--syn-string-escape": "var(--syn-number)",
     "--syn-string-interpol": "var(--syn-string-alt)",
     "--syn-string-other": "var(--syn-string-alt)",
@@ -139,10 +139,7 @@ _ROOT_SECTIONS: List[Tuple[str, List[str]]] = [
             "--metadata-box-shadow",
             "--table-th-color",
             "--panel-title-color",
-            "--header-bg-color-start",
-            "--header-bg-color-mid",
-            "--header-bg-color-end",
-            "--header-bg-color-to",
+            "--header-bg-color",
             "--link-color",
             "--hover-color",
             "--danger-color",
@@ -164,7 +161,6 @@ _ROOT_SECTIONS: List[Tuple[str, List[str]]] = [
             "--border-radius",
             "--border-radius-lg",
             "--box-shadow",
-            "--title-text-shadow",
             "--img-box-shadow",
             "--page-margin",
             "--font-title",
@@ -191,6 +187,7 @@ _ROOT_SECTIONS: List[Tuple[str, List[str]]] = [
             "--syn-fg",
             "--syn-comment",
             "--syn-comment-special-bg",
+            "--syn-builtin",
             "--syn-error",
             "--syn-error-bg",
             "--syn-keyword",
@@ -236,6 +233,23 @@ _ROOT_SECTIONS: List[Tuple[str, List[str]]] = [
 _RESOURCES_DIR = Path(__file__).resolve().parent.parent / "resources" / "help_css"
 
 
+def resolve_palette_key(spec: HelpCssColorSpec, variant: str) -> str:
+    """Return the palette attribute name for a help CSS color spec and variant."""
+    if isinstance(spec, str):
+        return spec
+    extra = set(spec) - {"dark", "light"}
+    if extra:
+        raise ValueError(
+            f"Help CSS color mapping has unknown variant keys: {sorted(extra)}"
+        )
+    try:
+        return spec[variant]
+    except KeyError as exc:
+        raise KeyError(
+            f"Help CSS color mapping is missing {variant!r} (have {sorted(spec)})"
+        ) from exc
+
+
 def palette_hex(palette_class: Type[Any], key: str) -> str:
     """Resolve a palette attribute to a hex color string.
 
@@ -253,10 +267,11 @@ def palette_hex(palette_class: Type[Any], key: str) -> str:
     return value
 
 
-def resolve_root_values(palette_class: Type[Any]) -> Dict[str, str]:
-    """Resolve all ``:root`` custom properties for a palette."""
+def resolve_root_values(palette_class: Type[Any], variant: str) -> Dict[str, str]:
+    """Resolve all ``:root`` custom properties for a palette and variant."""
     values: Dict[str, str] = dict(HELP_CSS_STATIC)
-    for css_var, palette_key in HELP_CSS_COLOR_MAP.items():
+    for css_var, spec in HELP_CSS_COLOR_MAP.items():
+        palette_key = resolve_palette_key(spec, variant)
         values[css_var] = palette_hex(palette_class, palette_key)
     return values
 
@@ -280,9 +295,9 @@ def format_root(values: Dict[str, str]) -> str:
     return "\n".join(lines)
 
 
-def build_root(palette_class: Type[Any]) -> str:
+def build_root(palette_class: Type[Any], variant: str) -> str:
     """Build the ``:root`` block from palette-mapped and static values."""
-    return format_root(resolve_root_values(palette_class))
+    return format_root(resolve_root_values(palette_class, variant))
 
 
 def load_rules() -> str:
@@ -297,7 +312,7 @@ def build_default_css(variant: str, palette_class: Type[Any]) -> str:
     """Build the full ``default.css`` content for a theme variant."""
     if variant not in ("dark", "light"):
         raise ValueError(f"Unsupported help CSS variant: {variant!r}")
-    root = build_root(palette_class).rstrip()
+    root = build_root(palette_class, variant).rstrip()
     rules = load_rules().lstrip()
     if not root.endswith("\n"):
         root += "\n"
