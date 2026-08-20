@@ -1,4 +1,4 @@
-"""Tests for help default.css generation."""
+"""Tests for CSS default.css generation."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import pytest
 
 from themeweaver.core.css_generator import (
     CSS_COLOR_MAP,
-    HELP_CSS_STATIC,
+    CSS_STATIC,
     build_default_css,
     build_root,
     palette_hex,
@@ -104,14 +104,12 @@ class TestBuildRoot:
     def test_static_aliases_and_images(self) -> None:
         palettes = create_palettes("spyder")
         root = build_root(palettes.dark, "dark")
-        assert _css_var_value(root, "--note-border") == HELP_CSS_STATIC["--note-border"]
+        assert _css_var_value(root, "--note-border") == CSS_STATIC["--note-border"]
         assert (
-            _css_var_value(root, "--syn-string-alt")
-            == HELP_CSS_STATIC["--syn-string-alt"]
+            _css_var_value(root, "--syn-string-alt") == CSS_STATIC["--syn-string-alt"]
         )
         assert (
-            _css_var_value(root, "--img-arrow-down")
-            == HELP_CSS_STATIC["--img-arrow-down"]
+            _css_var_value(root, "--img-arrow-down") == CSS_STATIC["--img-arrow-down"]
         )
 
 
@@ -125,7 +123,7 @@ class TestBuildAndWrite:
 
     def test_invalid_variant(self) -> None:
         palettes = create_palettes("spyder")
-        with pytest.raises(ValueError, match="Unsupported help CSS variant"):
+        with pytest.raises(ValueError, match="Unsupported CSS variant"):
             build_default_css("sepia", palettes.dark)
 
     def test_write_default_css(self, tmp_path: Path) -> None:

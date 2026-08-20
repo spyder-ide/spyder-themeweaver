@@ -13,7 +13,7 @@ requires = ["hatchling"]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel.force-include]
-"src/themeweaver/resources/help_css" = "themeweaver/resources/help_css"
+"src/themeweaver/resources/css" = "themeweaver/resources/css"
 
 # Configuration for the generated spyder-themes Python package
 [tool.themeweaver.spyder-package]
