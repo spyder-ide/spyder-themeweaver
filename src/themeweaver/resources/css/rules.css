@@ -82,19 +82,23 @@ h2, h3, h4 {
     margin-bottom: 10px;
 }
 
+h1 {
+    font-size: 180%;
+}
+
 h2 {
-    font-size: 140%;
+    font-size: 160%;
     font-weight: normal;
     border-bottom: 1px solid var(--border-subtle);
     padding: 4px 0px 4px 0px;
 }
 
 h3 {
-    font-size: 115%;
+    font-size: 140%;
 }
 
 h4 {
-    font-size: 100%;
+    font-size: 120%;
     margin-top: 14px;
     font-weight: normal;
 }
@@ -170,12 +174,12 @@ div.section p {
 
 /* --- Links --- */
 a {
-    text-decoration: none;
+    text-decoration: underline;
     color: var(--link-color);
 }
 
 a:hover {
-    text-decoration: underline;
+    color: var(--hover-color);
 }
 
 
@@ -320,9 +324,10 @@ tt {
 div.admonition.note {
     font-size: 0.95em;
     margin: 1.3em;
-    border: 1px solid var(--note-border);
+    padding: 5px 14px;
     background-color: var(--note-bg);
-    padding: 0px 5px 0 5px;
+    border: 1px solid var(--note-border);
+    border-radius: var(--border-radius);
     color: var(--note-text);
 }
 

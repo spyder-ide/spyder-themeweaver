@@ -1,9 +1,11 @@
 [project]
-authors = [{name = "Andrés Conrado Montoya Acosta (@conradolandia)", email = "conradolandia@ik.me"}]
+authors = [
+    { name = "Andrés Conrado Montoya Acosta (@conradolandia)", email = "conradolandia@ik.me" },
+]
 dependencies = []
 name = "ThemeWeaver"
 requires-python = ">= 3.12"
-version = "0.4.3"
+version = "0.5.0"
 
 [build-system]
 build-backend = "hatchling.build"
@@ -21,7 +23,7 @@ version = "1.0.10"
 display_name = "Spyder Themes"
 description = "Collection of themes for Spyder IDE"
 authors = [
-  { name="Andrés Conrado Montoya Acosta (@conradolandia)", email="conradolandia@ik.me" },
+    { name = "Andrés Conrado Montoya Acosta (@conradolandia)", email = "conradolandia@ik.me" },
 ]
 readme = "README.md"
 requires-python = ">=3.9"
@@ -67,7 +69,6 @@ format = "ruff format . --exclude .pixi,.venv,.git,.pytest_cache,.ruff_cache,.my
 lint-fix = "ruff check --fix . --exclude .pixi,.venv,.git,.pytest_cache,.ruff_cache,.mypy_cache,.vscode"
 check = { depends-on = ["lint"] }
 cli = "python -m themeweaver.cli"
-export = "python -m themeweaver.cli export --theme"
 export-light = "python -m themeweaver.cli export --variants light --theme"
 export-dark = "python -m themeweaver.cli export --variants dark --theme"
 export-all = "python -m themeweaver.cli export --all"
@@ -76,6 +77,11 @@ package = "python -m themeweaver.cli python-package --run-build"
 package-check = "python -m twine check dist/spyder_themes/dist/*"
 publish-testpypi = "python -m twine upload --repository testpypi dist/spyder_themes/dist/*"
 publish-pypi = "python -m twine upload dist/spyder_themes/dist/*"
+deploy-local-all = { depends-on = [
+    "export-all",
+    "package",
+    "package-check",
+], cmd = "pip install -e dist/spyder_themes" }
 list-themes = "python -m themeweaver.cli list"
 theme-info = "python -m themeweaver.cli info"
 generate = "python -m themeweaver.cli generate"
@@ -95,12 +101,26 @@ test = "pytest tests"
 test-cov = "pytest tests --cov=src/themeweaver --cov-report=html --cov-report=term"
 inspect-cov = "python -m http.server -b 127.0.0.1 -d ./htmlcov 8000"
 
+[tool.pixi.tasks.export]
+cmd = "python -m themeweaver.cli export --theme {{ theme }}"
+args = [{ arg = "theme" }]
+
+[tool.pixi.tasks.deploy-local]
+# Export one theme, then package everything already under build/, check, and install editable.
+args = [{ arg = "theme" }]
+depends-on = [
+    { task = "export", args = [
+        "{{ theme }}",
+    ] },
+    { task = "package" },
+    { task = "package-check" },
+]
+cmd = "pip install -e dist/spyder_themes"
+
 [tool.pytest.ini_options]
 pythonpath = ["tests"]
 # colorspacious: docstrings with LaTeX (e.g. \\Delta) emit SyntaxWarning on Python 3.12+ until fixed upstream.
-filterwarnings = [
-    "ignore::SyntaxWarning:colorspacious\\.comparison",
-]
+filterwarnings = ["ignore::SyntaxWarning:colorspacious\\.comparison"]
 
 # Coverage configuration
 [tool.coverage.run]

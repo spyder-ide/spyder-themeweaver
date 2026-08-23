@@ -47,13 +47,17 @@ pixi run preview
 # Package for Spyder (needs themes in build/ — run export or export-all first; does not export)
 pixi run package
 pixi run package -- --themes dracula,solarized --output ./dist
+
+# Export + package + twine check + editable install (local Spyder use)
+pixi run deploy-local inkpot          # export one theme, then package all of build/
+pixi run deploy-local-all             # export every theme, then package and install
 ```
 
-Export tasks (`export`, `export-light`, `export-dark`, `export-all`) all call the `export` CLI and write under `build/`. The `package` task runs `python-package --run-build`: it copies themes from `build/` into a generated project under `dist/<package_name>/`, then runs `python -m build` to produce a wheel and sdist. It never runs export for you.
+Export tasks (`export`, `export-light`, `export-dark`, `export-all`) all call the `export` CLI and write under `build/`. The `package` task runs `python-package --run-build`: it copies themes from `build/` into a generated project under `dist/<package_name>/`, then runs `python -m build` to produce a wheel and sdist. It never runs export for you. `deploy-local <name>` exports that theme, then runs `package`, `package-check`, and `pip install -e dist/spyder_themes` (packaging still includes every theme already under `build/`). `deploy-local-all` does the same after `export-all`.
 
 **Layout for PyPI artifacts:** Theme sources live under `dist/<package_name>/` (for example `dist/spyder_themes/pyproject.toml`, `README.md`, `LICENSE`, and the import package). By default, `python -m build` writes outputs into `dist/<package_name>/dist/` (for example `dist/spyder_themes/dist/*.whl` and `*.tar.gz`). If you pass `--build-outdir`, artifacts go to that directory instead. Run `twine check` and `twine upload` against the actual build output path.
 
-The **Spyder theme bundle** has its own release version in `[tool.themeweaver.spyder-package].version` in `pyproject.toml` (starts at `0.1.0`). It is independent of the `themeweaver` tool version. ThemeWeaver itself is not published to PyPI; only the generated Spyder package is intended for upload.
+The **Spyder theme bundle** has its own release version in `[tool.themeweaver.spyder-package].version` in `pyproject.toml`. It is independent of the `themeweaver` tool version. ThemeWeaver itself is not published to PyPI; only the generated Spyder package is intended for upload.
 
 Theme generation (colors or YAML) is documented under [Theme generation](#theme-generation).
 
@@ -98,6 +102,30 @@ Export flags include:
 - `--generate-palette-images` (emit `palette.svg` and `palette.png`; default: off)
 
 Theme ids that contain shell metacharacters (for example `notepad++`) must be quoted when passed on the shell: `pixi run export 'notepad++'`.
+
+Export also writes Spyder help `default.css` for each variant (palette-driven `:root` variables plus shared rules). Themes may override individual CSS color mappings in `mappings.yaml`; see [Help CSS overrides](#help-css-overrides).
+
+### Dev sync
+
+`dev-sync` exports one or more themes and copies them into an editable `spyder_themes` tree (default `dist/spyder_themes/spyder_themes`) for a fast install-free edit loop. Prefer this while iterating; use `deploy-local` / `deploy-local-all` when you want a full package build and `pip install -e`.
+
+```bash
+pixi run dev-sync inkpot
+pixi run cli dev-sync --theme inkpot,dracula
+pixi run cli dev-sync --theme inkpot --skip-export   # sync from build/ only
+```
+
+### Help CSS overrides
+
+Optional `css_overrides` in a theme’s `mappings.yaml` replace entries from the built-in help CSS color map. Omit the section to keep defaults. Keys are CSS custom properties (for example `--hover-color`). Values are palette attributes (`COLOR_ACCENT_2`), color-class refs (`Primary.B30`), or a `{dark, light}` map (both keys required). Unknown CSS keys are rejected.
+
+```yaml
+css_overrides:
+  --hover-color: COLOR_ACCENT_2
+  --border-color:
+    dark: Primary.B60
+    light: Primary.B100
+```
 
 ### Contrast validation
 
@@ -144,6 +172,15 @@ These tasks target `dist/spyder_themes/dist/*` (the default package name). If yo
 Optional `[project.urls]` for the generated package can be set via `homepage` and `repository` under `[tool.themeweaver.spyder-package]` in this repo’s `pyproject.toml`.
 
 Archive packaging (ZIP / tar.gz / folder) for loose theme folders is implemented in `ThemePackager` in the Python API only; there is no CLI subcommand for it.
+
+### Local deploy
+
+```bash
+pixi run deploy-local inkpot      # export inkpot → package all of build/ → twine check → pip install -e
+pixi run deploy-local-all         # export-all → package → twine check → pip install -e
+```
+
+`deploy-local` does not limit packaging to the named theme; `package` still includes every exported theme present under `build/`.
 
 ### Theme generation
 
@@ -425,10 +462,13 @@ pixi run prek-update
 | `export-light`          | Export light variant only                                                                                                          |
 | `export-dark`           | Export dark variant only                                                                                                           |
 | `export-all`            | Export every theme into `build/`                                                                                                   |
+| `dev-sync`              | Export theme(s) and sync into editable `spyder_themes` tree                                                                        |
 | `package`               | `python-package --run-build`: layout under `dist/<name>/`, then wheel + sdist under `dist/<name>/dist/` (run `export` / `export-all` first; all built themes unless `--themes` after `--`) |
 | `package-check`         | `twine check` on `dist/spyder_themes/dist/*` (default package name)                                                                 |
 | `publish-testpypi`      | `twine upload` to TestPyPI (`dist/spyder_themes/dist/*`)                                                                            |
 | `publish-pypi`          | `twine upload` to PyPI (`dist/spyder_themes/dist/*`)                                                                                |
+| `deploy-local`          | Export one theme, then package all of `build/`, check, and `pip install -e dist/spyder_themes`                                       |
+| `deploy-local-all`      | `export-all` → `package` → `package-check` → `pip install -e dist/spyder_themes`                                                    |
 | `list-themes`           | List theme directories                                                                                                             |
 | `theme-info`            | Show theme metadata                                                                                                                |
 | `generate`              | Generate a theme from colors or YAML                                                                                               |
@@ -461,8 +501,9 @@ themeweaver/
 ├── src/themeweaver/
 │   ├── cli/           # CLI entrypoint and commands
 │   ├── contrast/      # Contrast rules and validator
-│   ├── core/          # Export, generation, YAML loading
-│   └── color_utils/   # Palettes, interpolation, helpers
+│   ├── core/          # Export, CSS/help generation, YAML loading
+│   ├── color_utils/   # Palettes, interpolation, helpers
+│   └── resources/     # Shared templates (e.g. help CSS rules)
 ├── themes/            # Theme sources (default cwd-relative)
 ├── scripts/           # Preview launcher and helpers
 │   └── preview/       # Preview UI implementation

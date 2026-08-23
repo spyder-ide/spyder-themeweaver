@@ -7,17 +7,21 @@ from pathlib import Path
 
 import pytest
 
+from themeweaver.core.colorsystem import get_color_classes_for_theme
 from themeweaver.core.css_generator import (
     CSS_COLOR_MAP,
     CSS_STATIC,
     build_default_css,
     build_root,
+    merge_css_color_map,
     palette_hex,
+    resolve_css_color_value,
     resolve_palette_key,
     write_default_css,
 )
 from themeweaver.core.palette import create_palettes
 from themeweaver.core.theme_exporter import ThemeExporter
+from themeweaver.core.yaml_loader import load_css_overrides_from_yaml
 
 
 def _css_var_value(css: str, name: str) -> str:
@@ -51,6 +55,33 @@ class TestPaletteHex:
             palette_hex(Pal, "COLOR_TEXT_2")
 
 
+class TestResolveCssColorValue:
+    def test_palette_attribute(self) -> None:
+        class Pal:
+            COLOR_ACCENT_2 = "#aabbcc"
+
+        assert resolve_css_color_value(Pal, "COLOR_ACCENT_2") == "#aabbcc"
+
+    def test_color_class_ref(self) -> None:
+        class Primary:
+            B30 = "#112233"
+
+        class Pal:
+            pass
+
+        assert (
+            resolve_css_color_value(Pal, "Primary.B30", {"Primary": Primary})
+            == "#112233"
+        )
+
+    def test_color_class_ref_requires_classes(self) -> None:
+        class Pal:
+            pass
+
+        with pytest.raises(ValueError, match="requires color_classes"):
+            resolve_css_color_value(Pal, "Primary.B30")
+
+
 class TestResolvePaletteKey:
     def test_string_applies_to_both_variants(self) -> None:
         assert resolve_palette_key("COLOR_TEXT_1", "dark") == "COLOR_TEXT_1"
@@ -71,6 +102,40 @@ class TestResolvePaletteKey:
                 {"dark": "COLOR_TEXT_1", "light": "COLOR_TEXT_1", "sepia": "X"},
                 "dark",
             )
+
+
+class TestMergeCssColorMap:
+    def test_no_overrides_returns_defaults(self) -> None:
+        merged = merge_css_color_map(None)
+        assert merged == CSS_COLOR_MAP
+        assert merged is not CSS_COLOR_MAP
+
+    def test_sparse_override_replaces_spec(self) -> None:
+        merged = merge_css_color_map({"--hover-color": "COLOR_ACCENT_2"})
+        assert merged["--hover-color"] == "COLOR_ACCENT_2"
+        assert merged["--text-color"] == CSS_COLOR_MAP["--text-color"]
+
+    def test_variant_override(self) -> None:
+        merged = merge_css_color_map(
+            {
+                "--border-color": {
+                    "dark": "Primary.B60",
+                    "light": "Primary.B100",
+                }
+            }
+        )
+        assert merged["--border-color"] == {
+            "dark": "Primary.B60",
+            "light": "Primary.B100",
+        }
+
+    def test_unknown_key_rejected(self) -> None:
+        with pytest.raises(ValueError, match="Unknown CSS override keys"):
+            merge_css_color_map({"--not-a-real-var": "COLOR_TEXT_1"})
+
+    def test_partial_variant_mapping_rejected(self) -> None:
+        with pytest.raises(ValueError, match="missing"):
+            merge_css_color_map({"--border-color": {"dark": "COLOR_BACKGROUND_5"}})
 
 
 class TestBuildRoot:
@@ -112,6 +177,34 @@ class TestBuildRoot:
             _css_var_value(root, "--img-arrow-down") == CSS_STATIC["--img-arrow-down"]
         )
 
+    def test_overrides_apply_palette_and_class_refs(self) -> None:
+        palettes = create_palettes("brutalism")
+        color_classes = get_color_classes_for_theme("brutalism")
+        color_map = merge_css_color_map(
+            {
+                "--hover-color": "COLOR_ACCENT_2",
+                "--border-color": {
+                    "dark": "Primary.B60",
+                    "light": "Primary.B100",
+                },
+            }
+        )
+        dark_root = build_root(
+            palettes.dark,
+            "dark",
+            color_map=color_map,
+            color_classes=color_classes,
+        )
+        assert _css_var_value(dark_root, "--hover-color") == palette_hex(
+            palettes.dark, "COLOR_ACCENT_2"
+        )
+        assert (
+            _css_var_value(dark_root, "--border-color") == color_classes["Primary"].B60
+        )
+        assert _css_var_value(dark_root, "--text-color") == palette_hex(
+            palettes.dark, "COLOR_TEXT_1"
+        )
+
 
 class TestBuildAndWrite:
     def test_build_includes_rules(self) -> None:
@@ -133,6 +226,19 @@ class TestBuildAndWrite:
         assert out == variant_dir / "default.css"
         assert out.is_file()
         assert "url(rc/arrow_down.png)" in out.read_text(encoding="utf-8")
+
+
+class TestLoadCssOverrides:
+    def test_missing_section_is_empty(self) -> None:
+        assert load_css_overrides_from_yaml("spyder") == {}
+
+    def test_brutalism_sparse_overrides(self) -> None:
+        overrides = load_css_overrides_from_yaml("brutalism")
+        assert overrides["--hover-color"] == "COLOR_ACCENT_2"
+        assert overrides["--border-color"] == {
+            "dark": "Primary.B60",
+            "light": "Primary.B100",
+        }
 
 
 class TestExportIntegration:
@@ -161,12 +267,19 @@ class TestExportIntegration:
         assert css_path.is_file()
         text = css_path.read_text(encoding="utf-8")
         palette = create_palettes(theme_name).dark
+        color_classes = get_color_classes_for_theme(theme_name)
+        color_map = merge_css_color_map(load_css_overrides_from_yaml(theme_name))
         spyder_palette = create_palettes("spyder").dark
         differed = False
-        for css_var, spec in CSS_COLOR_MAP.items():
-            palette_key = resolve_palette_key(spec, "dark")
-            theme_hex = palette_hex(palette, palette_key)
+        for css_var, spec in color_map.items():
+            source_key = resolve_palette_key(spec, "dark")
+            theme_hex = resolve_css_color_value(palette, source_key, color_classes)
             assert _css_var_value(text, css_var) == theme_hex
-            if theme_hex != palette_hex(spyder_palette, palette_key):
+            default_key = resolve_palette_key(CSS_COLOR_MAP[css_var], "dark")
+            if theme_hex != palette_hex(spyder_palette, default_key):
                 differed = True
         assert differed, "expected brutalism palette to differ from spyder"
+        assert _css_var_value(text, "--hover-color") == palette_hex(
+            palette, "COLOR_ACCENT_2"
+        )
+        assert _css_var_value(text, "--border-color") == color_classes["Primary"].B60

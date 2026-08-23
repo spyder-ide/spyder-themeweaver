@@ -12,11 +12,15 @@ import shutil
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from themeweaver.core.colorsystem import load_theme_metadata_from_yaml
-from themeweaver.core.css_generator import write_default_css
+from themeweaver.core.colorsystem import (
+    get_color_classes_for_theme,
+    load_theme_metadata_from_yaml,
+)
+from themeweaver.core.css_generator import merge_css_color_map, write_default_css
 from themeweaver.core.palette import create_palettes
 from themeweaver.core.qdarkstyle_exporter import QDarkStyleAssetExporter
 from themeweaver.core.spyder_generator import SpyderFileGenerator
+from themeweaver.core.yaml_loader import load_css_overrides_from_yaml
 
 _logger = logging.getLogger(__name__)
 
@@ -101,8 +105,14 @@ class ThemeExporter:
         export_dir = self.build_dir / theme_name
         export_dir.mkdir(parents=True, exist_ok=True)
 
-        # Load theme palettes
+        # Load theme palettes and optional help-CSS color overrides
         palettes = create_palettes(theme_name, themes_dir=self.themes_dir)
+        css_color_map = merge_css_color_map(
+            load_css_overrides_from_yaml(theme_name, themes_dir=self.themes_dir)
+        )
+        color_classes = get_color_classes_for_theme(
+            theme_name, themes_dir=self.themes_dir
+        )
 
         exported_paths: Dict[str, Path] = {}
 
@@ -124,7 +134,13 @@ class ThemeExporter:
                 compile_for=compile_for,
                 generate_palette_images=generate_palette_images,
             )
-            write_default_css(variant_dir, variant, palette_class)
+            write_default_css(
+                variant_dir,
+                variant,
+                palette_class,
+                color_map=css_color_map,
+                color_classes=color_classes,
+            )
             exported_paths[variant] = variant_dir
 
         # Generate Spyder-compatible Python files

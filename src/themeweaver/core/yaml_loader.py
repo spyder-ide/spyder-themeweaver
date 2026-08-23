@@ -124,6 +124,41 @@ def load_semantic_mappings_from_yaml(
     return semantic_mappings
 
 
+def load_css_overrides_from_yaml(
+    theme_name: str = "solarized", themes_dir: Optional[Path] = None
+) -> Dict[str, Any]:
+    """
+    Load sparse help-CSS color overrides from mappings.yaml for a theme.
+
+    Keys are CSS custom property names (e.g. ``--hover-color``). Values are
+    palette attribute names, color-class refs (``Primary.B30``), or a mapping
+    with both ``dark`` and ``light`` variants. Missing section yields ``{}``.
+
+    Args:
+        theme_name: Name of the theme to load. Defaults to "solarized".
+        themes_dir: Directory where themes are stored. If None, uses default.
+
+    Returns:
+        CSS override mapping, or empty dict if the section is absent.
+
+    Raises:
+        FileNotFoundError: If the theme directory or mappings.yaml file doesn't exist.
+        ValueError: If the YAML file contains invalid syntax.
+    """
+    if themes_dir is None:
+        themes_dir = Path.cwd() / "themes"
+
+    mappings_file = themes_dir / theme_name / "mappings.yaml"
+    overrides = load_yaml_file(mappings_file, "css_overrides")
+    if overrides is None:
+        return {}
+    if not isinstance(overrides, dict):
+        raise ValueError(
+            f"css_overrides in {mappings_file} must be a mapping, got {type(overrides).__name__}"
+        )
+    return overrides
+
+
 def load_theme_metadata_from_yaml(
     theme_name: str = "solarized", themes_dir: Optional[Path] = None
 ) -> Dict[str, Any]:

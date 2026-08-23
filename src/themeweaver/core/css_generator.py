@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Tuple, Type, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Type, Union
+
+from themeweaver.core.colorsystem import _resolve_color_reference
 
 _logger = logging.getLogger(__name__)
 
 # CSS custom property -> palette attribute (hex, or editor (color, bold, italic)).
 # A string applies to both variants. A mapping must include both "dark" and "light".
 # Example: "--header-text-color": {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"}
+# Theme ``css_overrides`` may also use color-class refs (e.g. ``Primary.B30``).
 CssColorSpec = Union[str, Mapping[str, str]]
 CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--background-color": "COLOR_BACKGROUND_1",
@@ -25,7 +28,7 @@ CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--metadata-text-color": "COLOR_TEXT_1",
     "--header-bg-color": {"dark": "COLOR_ACCENT_1", "light": "SPECIAL_TABS_SELECTED"},
     "--header-text-color": {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"},
-    "--link-color": "COLOR_ACCENT_5",
+    "--link-color": {"dark": "COLOR_ACCENT_3", "light": "COLOR_ACCENT_4"},
     "--hover-color": "COLOR_ACCENT_3",
     "--danger-color": "COLOR_ERROR_2",
     "--warning-bg": "COLOR_WARN_2",
@@ -95,11 +98,9 @@ CSS_STATIC: Dict[str, str] = {
     "--syn-label": "var(--syn-fg)",
     "--syn-variable": "var(--syn-fg)",
     "--syn-whitespace": "var(--syn-fg)",
-    "--syn-builtin": "var(--syn-builtin)",
     "--syn-type": "var(--syn-keyword)",
     "--syn-constant": "var(--syn-keyword)",
     "--syn-keyword-namespace": "var(--syn-keyword)",
-    "--syn-operator-word": "var(--syn-operator)",
     "--syn-deleted": "var(--syn-operator)",
     "--syn-tag": "var(--syn-operator)",
     "--syn-class": "var(--syn-inserted)",
@@ -187,7 +188,6 @@ _ROOT_SECTIONS: List[Tuple[str, List[str]]] = [
             "--syn-fg",
             "--syn-comment",
             "--syn-comment-special-bg",
-            "--syn-builtin",
             "--syn-error",
             "--syn-error-bg",
             "--syn-keyword",
@@ -212,7 +212,6 @@ _ROOT_SECTIONS: List[Tuple[str, List[str]]] = [
             "--syn-type",
             "--syn-constant",
             "--syn-keyword-namespace",
-            "--syn-operator-word",
             "--syn-deleted",
             "--syn-tag",
             "--syn-class",
@@ -234,7 +233,11 @@ _RESOURCES_DIR = Path(__file__).resolve().parent.parent / "resources" / "css"
 
 
 def resolve_palette_key(spec: CssColorSpec, variant: str) -> str:
-    """Return the palette attribute name for a help CSS color spec and variant."""
+    """Return the color source key for a help CSS color spec and variant.
+
+    The key is either a palette attribute (``COLOR_TEXT_1``) or a color-class
+    reference (``Primary.B30``).
+    """
     if isinstance(spec, str):
         return spec
     extra = set(spec) - {"dark", "light"}
@@ -248,6 +251,64 @@ def resolve_palette_key(spec: CssColorSpec, variant: str) -> str:
         raise KeyError(
             f"Help CSS color mapping is missing {variant!r} (have {sorted(spec)})"
         ) from exc
+
+
+def _validate_color_spec(css_var: str, spec: Any) -> CssColorSpec:
+    """Validate and normalize a CSS color override or default spec."""
+    if isinstance(spec, str):
+        if not spec:
+            raise ValueError(f"CSS color mapping for {css_var!r} is empty")
+        return spec
+    if isinstance(spec, Mapping):
+        extra = set(spec) - {"dark", "light"}
+        if extra:
+            raise ValueError(
+                f"CSS color mapping for {css_var!r} has unknown variant keys: "
+                f"{sorted(extra)}"
+            )
+        missing = {"dark", "light"} - set(spec)
+        if missing:
+            raise ValueError(
+                f"CSS color mapping for {css_var!r} is missing {sorted(missing)}"
+            )
+        dark = spec["dark"]
+        light = spec["light"]
+        if not isinstance(dark, str) or not dark:
+            raise ValueError(
+                f"CSS color mapping for {css_var!r} dark value must be a non-empty string"
+            )
+        if not isinstance(light, str) or not light:
+            raise ValueError(
+                f"CSS color mapping for {css_var!r} light value must be a non-empty string"
+            )
+        return {"dark": dark, "light": light}
+    raise ValueError(
+        f"CSS color mapping for {css_var!r} must be a string or "
+        f"{{dark, light}} mapping, got {type(spec).__name__}"
+    )
+
+
+def merge_css_color_map(
+    overrides: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, CssColorSpec]:
+    """Merge sparse theme overrides onto ``CSS_COLOR_MAP``.
+
+    Unknown CSS variable keys raise ``ValueError``. Each override replaces the
+    whole default spec for that key (no partial dark/light merge).
+    """
+    merged: Dict[str, CssColorSpec] = dict(CSS_COLOR_MAP)
+    if not overrides:
+        return merged
+
+    unknown = set(overrides) - set(CSS_COLOR_MAP)
+    if unknown:
+        raise ValueError(
+            f"Unknown CSS override keys (not in CSS_COLOR_MAP): {sorted(unknown)}"
+        )
+
+    for css_var, spec in overrides.items():
+        merged[css_var] = _validate_color_spec(css_var, spec)
+    return merged
 
 
 def palette_hex(palette_class: Type[Any], key: str) -> str:
@@ -267,12 +328,45 @@ def palette_hex(palette_class: Type[Any], key: str) -> str:
     return value
 
 
-def resolve_root_values(palette_class: Type[Any], variant: str) -> Dict[str, str]:
+def resolve_css_color_value(
+    palette_class: Type[Any],
+    key: str,
+    color_classes: Optional[Mapping[str, Type[Any]]] = None,
+) -> str:
+    """Resolve a CSS color source to a hex string.
+
+    ``key`` is a palette attribute (``COLOR_TEXT_1``) or a color-class reference
+    (``Primary.B30``). Class refs require ``color_classes``.
+    """
+    if "." in key:
+        if not color_classes:
+            raise ValueError(
+                f"Color-class reference {key!r} requires color_classes to resolve"
+            )
+        value = _resolve_color_reference(key, dict(color_classes))
+        if not isinstance(value, str) or not value.startswith("#"):
+            raise ValueError(
+                f"Color-class reference {key!r} did not resolve to a hex color: {value!r}"
+            )
+        return value
+    return palette_hex(palette_class, key)
+
+
+def resolve_root_values(
+    palette_class: Type[Any],
+    variant: str,
+    *,
+    color_map: Optional[Mapping[str, CssColorSpec]] = None,
+    color_classes: Optional[Mapping[str, Type[Any]]] = None,
+) -> Dict[str, str]:
     """Resolve all ``:root`` custom properties for a palette and variant."""
     values: Dict[str, str] = dict(CSS_STATIC)
-    for css_var, spec in CSS_COLOR_MAP.items():
-        palette_key = resolve_palette_key(spec, variant)
-        values[css_var] = palette_hex(palette_class, palette_key)
+    mapping = color_map if color_map is not None else CSS_COLOR_MAP
+    for css_var, spec in mapping.items():
+        source_key = resolve_palette_key(spec, variant)
+        values[css_var] = resolve_css_color_value(
+            palette_class, source_key, color_classes
+        )
     return values
 
 
@@ -295,9 +389,22 @@ def format_root(values: Dict[str, str]) -> str:
     return "\n".join(lines)
 
 
-def build_root(palette_class: Type[Any], variant: str) -> str:
+def build_root(
+    palette_class: Type[Any],
+    variant: str,
+    *,
+    color_map: Optional[Mapping[str, CssColorSpec]] = None,
+    color_classes: Optional[Mapping[str, Type[Any]]] = None,
+) -> str:
     """Build the ``:root`` block from palette-mapped and static values."""
-    return format_root(resolve_root_values(palette_class, variant))
+    return format_root(
+        resolve_root_values(
+            palette_class,
+            variant,
+            color_map=color_map,
+            color_classes=color_classes,
+        )
+    )
 
 
 def load_rules() -> str:
@@ -308,11 +415,22 @@ def load_rules() -> str:
     return path.read_text(encoding="utf-8")
 
 
-def build_default_css(variant: str, palette_class: Type[Any]) -> str:
+def build_default_css(
+    variant: str,
+    palette_class: Type[Any],
+    *,
+    color_map: Optional[Mapping[str, CssColorSpec]] = None,
+    color_classes: Optional[Mapping[str, Type[Any]]] = None,
+) -> str:
     """Build the full ``default.css`` content for a theme variant."""
     if variant not in ("dark", "light"):
         raise ValueError(f"Unsupported CSS variant: {variant!r}")
-    root = build_root(palette_class, variant).rstrip()
+    root = build_root(
+        palette_class,
+        variant,
+        color_map=color_map,
+        color_classes=color_classes,
+    ).rstrip()
     rules = load_rules().lstrip()
     if not root.endswith("\n"):
         root += "\n"
@@ -322,7 +440,12 @@ def build_default_css(variant: str, palette_class: Type[Any]) -> str:
 
 
 def write_default_css(
-    variant_dir: Path, variant: str, palette_class: Type[Any]
+    variant_dir: Path,
+    variant: str,
+    palette_class: Type[Any],
+    *,
+    color_map: Optional[Mapping[str, CssColorSpec]] = None,
+    color_classes: Optional[Mapping[str, Type[Any]]] = None,
 ) -> Path:
     """Write ``default.css`` into a variant export directory.
 
@@ -331,7 +454,12 @@ def write_default_css(
     """
     variant_dir.mkdir(parents=True, exist_ok=True)
     out_path = variant_dir / "default.css"
-    content = build_default_css(variant, palette_class)
+    content = build_default_css(
+        variant,
+        palette_class,
+        color_map=color_map,
+        color_classes=color_classes,
+    )
     out_path.write_text(content, encoding="utf-8")
     _logger.info("📄 Wrote CSS: %s", out_path)
     return out_path
