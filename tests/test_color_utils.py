@@ -7,6 +7,7 @@ Run with: `python -m pytest tests/test_color_utils.py -v`
 
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -119,6 +120,94 @@ class TestColorUtils:
         adjusted = adjust_for_contrast(fg, bg, 3)
         assert adjusted is not None
         assert contrast_ratio(adjusted, bg) >= 2.99
+
+    def test_invalid_hex_colors(self) -> None:
+        """Reject malformed lengths and non-hexadecimal digits."""
+        from themeweaver.color_utils import hex_to_rgb
+
+        with pytest.raises(ValueError, match="6 characters"):
+            hex_to_rgb("#123")
+        with pytest.raises(ValueError, match="hex digits"):
+            hex_to_rgb("#GGGGGG")
+
+    def test_conversion_exception_fallbacks(self) -> None:
+        """Use documented fallbacks when colorspacious rejects input."""
+        from themeweaver.color_utils import color_utils
+
+        with patch.object(
+            color_utils.colorspacious, "cspace_convert", side_effect=ValueError
+        ):
+            assert color_utils.lch_to_hex(50, 20, 30) == "#808080"
+            assert color_utils.rgb_to_lch((1, 2, 3)) == [50, 0, 0]
+            assert color_utils.calculate_delta_e("#000000", "#FFFFFF") is None
+            assert color_utils.is_lch_in_gamut(50, 20, 30) is False
+
+        with patch.object(color_utils.colorspacious, "deltaE", side_effect=ValueError):
+            assert color_utils.calculate_delta_e("#000000", "#FFFFFF") is None
+
+    def test_color_info_lch_failure(self) -> None:
+        """Return empty LCH fields when conversion raises."""
+        from themeweaver.color_utils import color_utils
+
+        with patch.object(color_utils, "rgb_to_lch", side_effect=TypeError):
+            info = color_utils.get_color_info("#123456")
+
+        assert info["lch"] is None
+        assert info["lch_lightness"] is None
+
+    def test_is_color_dark_luminance_fallback(self) -> None:
+        """Use RGB luminance if LCH conversion raises."""
+        from themeweaver.color_utils import color_utils
+
+        with patch.object(color_utils, "rgb_to_lch", return_value=[20, 0, 0]):
+            assert color_utils.is_color_dark("#123456")
+
+        with patch.object(color_utils, "rgb_to_lch", side_effect=OverflowError):
+            assert color_utils.is_color_dark("#000000")
+            assert not color_utils.is_color_dark("#FFFFFF")
+
+    def test_find_max_chroma_expands_initial_bound(self) -> None:
+        """Expand the search bound when chroma 150 remains in gamut."""
+        from themeweaver.color_utils import color_utils
+
+        with patch.object(
+            color_utils,
+            "is_lch_in_gamut",
+            side_effect=lambda lightness, chroma, hue: chroma < 200,
+        ):
+            result = color_utils.find_max_in_gamut_chroma(50, 30)
+
+        assert 199 < result < 200
+
+    def test_adjust_gamut_preserves_chroma_when_possible(self) -> None:
+        """Select a nearby lightness that supports the requested chroma."""
+        from themeweaver.color_utils import color_utils
+
+        with patch.object(
+            color_utils,
+            "is_lch_in_gamut",
+            side_effect=lambda lightness, chroma, hue: lightness == 51,
+        ):
+            assert color_utils.adjust_lch_to_gamut(50, 100, 30, preserve="chroma") == (
+                51,
+                100,
+                30,
+            )
+
+    def test_empty_standard_deviation(self) -> None:
+        """An empty sample has zero standard deviation."""
+        from themeweaver.color_utils import calculate_std_dev
+
+        assert calculate_std_dev([]) == 0
+
+    def test_adjust_for_contrast_early_return_and_no_candidate(self) -> None:
+        """Cover unchanged and unachievable contrast results."""
+        from themeweaver.color_utils import color_utils
+
+        assert color_utils.adjust_for_contrast("#000000", "#FFFFFF", 7) == "#000000"
+
+        with patch.object(color_utils, "is_lch_in_gamut", return_value=False):
+            assert color_utils.adjust_for_contrast("#888888", "#CCCCCC", 7) is None
 
 
 class TestColorGeneration:

@@ -178,8 +178,8 @@ class TestBuildRoot:
         )
 
     def test_overrides_apply_palette_and_class_refs(self) -> None:
-        palettes = create_palettes("brutalism")
-        color_classes = get_color_classes_for_theme("brutalism")
+        palettes = create_palettes("spyder")
+        color_classes = get_color_classes_for_theme("spyder")
         color_map = merge_css_color_map(
             {
                 "--hover-color": "COLOR_ACCENT_2",
@@ -232,8 +232,23 @@ class TestLoadCssOverrides:
     def test_missing_section_is_empty(self) -> None:
         assert load_css_overrides_from_yaml("spyder") == {}
 
-    def test_brutalism_sparse_overrides(self) -> None:
-        overrides = load_css_overrides_from_yaml("brutalism")
+    def test_sparse_overrides_from_yaml(self, tmp_path: Path) -> None:
+        theme_dir = tmp_path / "fixture-theme"
+        theme_dir.mkdir()
+        (theme_dir / "mappings.yaml").write_text(
+            "\n".join(
+                [
+                    "css_overrides:",
+                    "  --hover-color: COLOR_ACCENT_2",
+                    "  --border-color:",
+                    "    dark: Primary.B60",
+                    "    light: Primary.B100",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        overrides = load_css_overrides_from_yaml("fixture-theme", themes_dir=tmp_path)
         assert overrides["--hover-color"] == "COLOR_ACCENT_2"
         assert overrides["--border-color"] == {
             "dark": "Primary.B60",
@@ -261,6 +276,7 @@ class TestExportIntegration:
 
     def test_non_spyder_theme_uses_its_palette(self, tmp_path: Path) -> None:
         exporter = ThemeExporter(build_dir=tmp_path / "build")
+        # Any non-spyder theme; do not assert theme-specific css_overrides.
         theme_name = "brutalism"
         result = exporter.export_theme(theme_name, variants=["dark"])
         css_path = result["dark"] / "default.css"
@@ -278,8 +294,4 @@ class TestExportIntegration:
             default_key = resolve_palette_key(CSS_COLOR_MAP[css_var], "dark")
             if theme_hex != palette_hex(spyder_palette, default_key):
                 differed = True
-        assert differed, "expected brutalism palette to differ from spyder"
-        assert _css_var_value(text, "--hover-color") == palette_hex(
-            palette, "COLOR_ACCENT_2"
-        )
-        assert _css_var_value(text, "--border-color") == color_classes["Primary"].B60
+        assert differed, f"expected {theme_name} palette to differ from spyder"
