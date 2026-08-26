@@ -60,9 +60,9 @@ CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
 APPEAL_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--background": "COLOR_BACKGROUND_1",
     "--foreground": "COLOR_TEXT_1",
-    "--heart": {"light": "Error.B60", "dark": "COLOR_ACCENT_1"},
-    "--link": {"light": "Error.B50", "dark": "COLOR_ACCENT_3"},
-    "--highlight": {"light": "Error.B40", "dark": "COLOR_ACCENT_4"},
+    "--heart": {"light": "Error.B70", "dark": "COLOR_ACCENT_4"},
+    "--link": {"light": "Error.B50", "dark": "COLOR_ACCENT_5"},  # ok
+    "--highlight": {"light": "Error.B30", "dark": "COLOR_ACCENT_3"},
     "--hand": {"light": "COLOR_HIGHLIGHT_1", "dark": "COLOR_HIGHLIGHT_4"},
     "--border-primary": "COLOR_BACKGROUND_5",
     "--border-secondary": "COLOR_BACKGROUND_4",
