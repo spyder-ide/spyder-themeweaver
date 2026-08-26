@@ -61,9 +61,9 @@ APPEAL_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--background": "COLOR_BACKGROUND_1",
     "--foreground": "COLOR_TEXT_1",
     "--heart": {"light": "Error.B70", "dark": "COLOR_ACCENT_4"},
-    "--link": {"light": "Error.B50", "dark": "COLOR_ACCENT_5"},  # ok
+    "--link": {"light": "Error.B50", "dark": "COLOR_ACCENT_5"},
     "--highlight": {"light": "Error.B30", "dark": "COLOR_ACCENT_3"},
-    "--hand": {"light": "COLOR_HIGHLIGHT_1", "dark": "COLOR_HIGHLIGHT_4"},
+    "--hand": {"light": "Warning.B120", "dark": "Secondary.B110"},
     "--border-primary": "COLOR_BACKGROUND_5",
     "--border-secondary": "COLOR_BACKGROUND_4",
     "--code-bg": "COLOR_BACKGROUND_3",
