@@ -16,11 +16,19 @@ from themeweaver.core.colorsystem import (
     get_color_classes_for_theme,
     load_theme_metadata_from_yaml,
 )
-from themeweaver.core.css_generator import merge_css_color_map, write_default_css
+from themeweaver.core.css_generator import (
+    merge_appeal_color_map,
+    merge_css_color_map,
+    write_appeal_css,
+    write_default_css,
+)
 from themeweaver.core.palette import create_palettes
 from themeweaver.core.qdarkstyle_exporter import QDarkStyleAssetExporter
 from themeweaver.core.spyder_generator import SpyderFileGenerator
-from themeweaver.core.yaml_loader import load_css_overrides_from_yaml
+from themeweaver.core.yaml_loader import (
+    load_appeal_overrides_from_yaml,
+    load_css_overrides_from_yaml,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -110,6 +118,9 @@ class ThemeExporter:
         css_color_map = merge_css_color_map(
             load_css_overrides_from_yaml(theme_name, themes_dir=self.themes_dir)
         )
+        appeal_color_map = merge_appeal_color_map(
+            load_appeal_overrides_from_yaml(theme_name, themes_dir=self.themes_dir)
+        )
         color_classes = get_color_classes_for_theme(
             theme_name, themes_dir=self.themes_dir
         )
@@ -139,6 +150,13 @@ class ThemeExporter:
                 variant,
                 palette_class,
                 color_map=css_color_map,
+                color_classes=color_classes,
+            )
+            write_appeal_css(
+                variant_dir,
+                variant,
+                palette_class,
+                color_map=appeal_color_map,
                 color_classes=color_classes,
             )
             exported_paths[variant] = variant_dir

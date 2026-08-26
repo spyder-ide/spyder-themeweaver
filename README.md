@@ -103,7 +103,7 @@ Export flags include:
 
 Theme ids that contain shell metacharacters (for example `notepad++`) must be quoted when passed on the shell: `pixi run export 'notepad++'`.
 
-Export also writes Spyder help `default.css` for each variant (palette-driven `:root` variables plus shared rules). Themes may override individual CSS color mappings in `mappings.yaml`; see [Help CSS overrides](#help-css-overrides).
+Export also writes Spyder help `default.css` and `appeal.css` for each variant. Themes may override individual CSS color mappings in `mappings.yaml`; see [Help CSS overrides](#help-css-overrides) and [Appeal CSS overrides](#appeal-css-overrides).
 
 ### Dev sync
 
@@ -123,6 +123,18 @@ Optional `css_overrides` in a theme’s `mappings.yaml` replace entries from the
 css_overrides:
   --hover-color: COLOR_ACCENT_2
   --border-color:
+    dark: Primary.B60
+    light: Primary.B100
+```
+
+### Appeal CSS overrides
+
+Optional `appeal_overrides` in a theme’s `mappings.yaml` replace entries from the built-in appeal CSS color map used for `appeal.css`. Omit the section to keep defaults. Keys are appeal CSS custom properties (for example `--link`). Values follow the same rules as `css_overrides`. Unknown keys are rejected.
+
+```yaml
+appeal_overrides:
+  --link: COLOR_ACCENT_2
+  --border-primary:
     dark: Primary.B60
     light: Primary.B100
 ```

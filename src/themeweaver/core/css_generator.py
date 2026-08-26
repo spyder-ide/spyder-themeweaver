@@ -1,4 +1,4 @@
-"""Generate Spyder help default.css from theme palettes."""
+"""Generate Spyder help default.css and appeal.css from theme palettes."""
 
 from __future__ import annotations
 
@@ -55,7 +55,21 @@ CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--syn-string": "EDITOR_STRING",
 }
 
-# Non-palette :root values (aliases, literals, images). Shared by dark and light.
+# Appeal CSS custom property -> palette attribute (hex only).
+# Theme ``appeal_overrides`` may also use color-class refs (e.g. ``Primary.B30``).
+APPEAL_COLOR_MAP: Dict[str, CssColorSpec] = {
+    "--background": "COLOR_BACKGROUND_1",
+    "--foreground": "COLOR_TEXT_1",
+    "--heart": {"light": "Error.B60", "dark": "COLOR_ACCENT_1"},
+    "--link": {"light": "Error.B50", "dark": "COLOR_ACCENT_3"},
+    "--highlight": {"light": "Error.B40", "dark": "COLOR_ACCENT_4"},
+    "--hand": {"light": "COLOR_HIGHLIGHT_1", "dark": "COLOR_HIGHLIGHT_4"},
+    "--border-primary": "COLOR_BACKGROUND_5",
+    "--border-secondary": "COLOR_BACKGROUND_4",
+    "--code-bg": "COLOR_BACKGROUND_3",
+}
+
+# Non-palette :root values for default CSS (aliases, literals, images). Shared by dark and light.
 CSS_STATIC: Dict[str, str] = {
     "--note-border": "var(--border-light)",
     "--note-text": "var(--text-color)",
@@ -288,27 +302,44 @@ def _validate_color_spec(css_var: str, spec: Any) -> CssColorSpec:
     )
 
 
-def merge_css_color_map(
+def merge_color_map(
+    base_map: Mapping[str, CssColorSpec],
     overrides: Optional[Mapping[str, Any]] = None,
+    *,
+    map_name: str,
 ) -> Dict[str, CssColorSpec]:
-    """Merge sparse theme overrides onto ``CSS_COLOR_MAP``.
+    """Merge sparse theme overrides onto a base CSS color map.
 
     Unknown CSS variable keys raise ``ValueError``. Each override replaces the
     whole default spec for that key (no partial dark/light merge).
     """
-    merged: Dict[str, CssColorSpec] = dict(CSS_COLOR_MAP)
+    merged: Dict[str, CssColorSpec] = dict(base_map)
     if not overrides:
         return merged
 
-    unknown = set(overrides) - set(CSS_COLOR_MAP)
+    unknown = set(overrides) - set(base_map)
     if unknown:
         raise ValueError(
-            f"Unknown CSS override keys (not in CSS_COLOR_MAP): {sorted(unknown)}"
+            f"Unknown override keys (not in {map_name}): {sorted(unknown)}"
         )
 
     for css_var, spec in overrides.items():
         merged[css_var] = _validate_color_spec(css_var, spec)
     return merged
+
+
+def merge_css_color_map(
+    overrides: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, CssColorSpec]:
+    """Merge sparse theme overrides onto ``CSS_COLOR_MAP``."""
+    return merge_color_map(CSS_COLOR_MAP, overrides, map_name="CSS_COLOR_MAP")
+
+
+def merge_appeal_color_map(
+    overrides: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, CssColorSpec]:
+    """Merge sparse theme overrides onto ``APPEAL_COLOR_MAP``."""
+    return merge_color_map(APPEAL_COLOR_MAP, overrides, map_name="APPEAL_COLOR_MAP")
 
 
 def palette_hex(palette_class: Type[Any], key: str) -> str:
@@ -352,6 +383,24 @@ def resolve_css_color_value(
     return palette_hex(palette_class, key)
 
 
+def resolve_color_map_values(
+    palette_class: Type[Any],
+    variant: str,
+    color_map: Mapping[str, CssColorSpec],
+    *,
+    color_classes: Optional[Mapping[str, Type[Any]]] = None,
+    static: Optional[Mapping[str, str]] = None,
+) -> Dict[str, str]:
+    """Resolve CSS custom properties from a color map (and optional static values)."""
+    values: Dict[str, str] = dict(static) if static else {}
+    for css_var, spec in color_map.items():
+        source_key = resolve_palette_key(spec, variant)
+        values[css_var] = resolve_css_color_value(
+            palette_class, source_key, color_classes
+        )
+    return values
+
+
 def resolve_root_values(
     palette_class: Type[Any],
     variant: str,
@@ -360,14 +409,14 @@ def resolve_root_values(
     color_classes: Optional[Mapping[str, Type[Any]]] = None,
 ) -> Dict[str, str]:
     """Resolve all ``:root`` custom properties for a palette and variant."""
-    values: Dict[str, str] = dict(CSS_STATIC)
     mapping = color_map if color_map is not None else CSS_COLOR_MAP
-    for css_var, spec in mapping.items():
-        source_key = resolve_palette_key(spec, variant)
-        values[css_var] = resolve_css_color_value(
-            palette_class, source_key, color_classes
-        )
-    return values
+    return resolve_color_map_values(
+        palette_class,
+        variant,
+        mapping,
+        color_classes=color_classes,
+        static=CSS_STATIC,
+    )
 
 
 def format_root(values: Dict[str, str]) -> str:
@@ -408,11 +457,25 @@ def build_root(
 
 
 def load_rules() -> str:
-    """Load the shared help CSS rules (no ``:root``)."""
+    """Load the shared CSS rules (no ``:root``) from the resources directory."""
     path = _RESOURCES_DIR / "rules.css"
     if not path.is_file():
         raise FileNotFoundError(f"CSS rules template not found: {path}")
     return path.read_text(encoding="utf-8")
+
+
+def _require_css_variant(variant: str) -> None:
+    if variant not in ("dark", "light"):
+        raise ValueError(f"Unsupported CSS variant: {variant!r}")
+
+
+def _write_css_file(variant_dir: Path, filename: str, content: str) -> Path:
+    """Write CSS content into a variant export directory."""
+    variant_dir.mkdir(parents=True, exist_ok=True)
+    out_path = variant_dir / filename
+    out_path.write_text(content, encoding="utf-8")
+    _logger.info("📄 Wrote CSS: %s", out_path)
+    return out_path
 
 
 def build_default_css(
@@ -423,8 +486,7 @@ def build_default_css(
     color_classes: Optional[Mapping[str, Type[Any]]] = None,
 ) -> str:
     """Build the full ``default.css`` content for a theme variant."""
-    if variant not in ("dark", "light"):
-        raise ValueError(f"Unsupported CSS variant: {variant!r}")
+    _require_css_variant(variant)
     root = build_root(
         palette_class,
         variant,
@@ -452,14 +514,90 @@ def write_default_css(
     Returns:
         Path to the written file.
     """
-    variant_dir.mkdir(parents=True, exist_ok=True)
-    out_path = variant_dir / "default.css"
-    content = build_default_css(
-        variant,
+    return _write_css_file(
+        variant_dir,
+        "default.css",
+        build_default_css(
+            variant,
+            palette_class,
+            color_map=color_map,
+            color_classes=color_classes,
+        ),
+    )
+
+
+def resolve_appeal_values(
+    palette_class: Type[Any],
+    variant: str,
+    *,
+    color_map: Optional[Mapping[str, CssColorSpec]] = None,
+    color_classes: Optional[Mapping[str, Type[Any]]] = None,
+) -> Dict[str, str]:
+    """Resolve appeal CSS custom properties for a palette and variant."""
+    mapping = color_map if color_map is not None else APPEAL_COLOR_MAP
+    return resolve_color_map_values(
         palette_class,
-        color_map=color_map,
+        variant,
+        mapping,
         color_classes=color_classes,
     )
-    out_path.write_text(content, encoding="utf-8")
-    _logger.info("📄 Wrote CSS: %s", out_path)
-    return out_path
+
+
+def format_appeal(values: Dict[str, str], variant: str) -> str:
+    """Format resolved appeal values as a ``[data-mode] { ... }`` CSS block."""
+    lines = [
+        "/* Spyder CSS */",
+        "/* Generated by ThemeWeaver from the theme palette. */",
+        "",
+        f'[data-mode="{variant}"] {{',
+    ]
+    for name in APPEAL_COLOR_MAP:
+        lines.append(f"  {name}: {values[name]};")
+    lines.append("}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def build_appeal_css(
+    variant: str,
+    palette_class: Type[Any],
+    *,
+    color_map: Optional[Mapping[str, CssColorSpec]] = None,
+    color_classes: Optional[Mapping[str, Type[Any]]] = None,
+) -> str:
+    """Build the ``appeal.css`` content for a theme variant."""
+    _require_css_variant(variant)
+    return format_appeal(
+        resolve_appeal_values(
+            palette_class,
+            variant,
+            color_map=color_map,
+            color_classes=color_classes,
+        ),
+        variant,
+    )
+
+
+def write_appeal_css(
+    variant_dir: Path,
+    variant: str,
+    palette_class: Type[Any],
+    *,
+    color_map: Optional[Mapping[str, CssColorSpec]] = None,
+    color_classes: Optional[Mapping[str, Type[Any]]] = None,
+) -> Path:
+    """Write ``appeal.css`` into a variant export directory.
+
+    Returns:
+        Path to the written file.
+    """
+    return _write_css_file(
+        variant_dir,
+        "appeal.css",
+        build_appeal_css(
+            variant,
+            palette_class,
+            color_map=color_map,
+            color_classes=color_classes,
+        ),
+    )
