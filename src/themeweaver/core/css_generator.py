@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Type, Union
@@ -15,6 +16,30 @@ _logger = logging.getLogger(__name__)
 # Example: "--header-text-color": {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"}
 # Theme ``css_overrides`` may also use color-class refs (e.g. ``Primary.B30``).
 CssColorSpec = Union[str, Mapping[str, str]]
+
+# Shared palette mappings used by both default and appeal CSS.
+_LINK_COLOR_SPEC: CssColorSpec = {"dark": "COLOR_ACCENT_3", "light": "COLOR_ACCENT_4"}
+_SCROLLBAR_COLORS: Dict[str, CssColorSpec] = {
+    "--scrollbar-thumb": "COLOR_DISABLED",
+    "--scrollbar-thumb-hover": "SPECIAL_TABS_SELECTED",
+}
+
+# Arrow PNG filenames in theme rc/. default.css uses relative urls next to rc/;
+# appeal.css embeds the files as data URIs (WebView has no theme path).
+_ARROW_FILES: Dict[str, str] = {
+    "--img-arrow-down": "arrow_down.png",
+    "--img-arrow-down-disabled": "arrow_down_disabled.png",
+    "--img-arrow-up": "arrow_up.png",
+    "--img-arrow-up-disabled": "arrow_up_disabled.png",
+    "--img-arrow-left": "arrow_left.png",
+    "--img-arrow-left-disabled": "arrow_left_disabled.png",
+    "--img-arrow-right": "arrow_right.png",
+    "--img-arrow-right-disabled": "arrow_right_disabled.png",
+}
+_ARROW_IMAGES: Dict[str, str] = {
+    css_var: f"url(rc/{filename})" for css_var, filename in _ARROW_FILES.items()
+}
+
 CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--background-color": "COLOR_BACKGROUND_1",
     "--surface-color": "COLOR_BACKGROUND_3",
@@ -28,7 +53,7 @@ CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--metadata-text-color": "COLOR_TEXT_1",
     "--header-bg-color": {"dark": "COLOR_ACCENT_1", "light": "SPECIAL_TABS_SELECTED"},
     "--header-text-color": {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"},
-    "--link-color": {"dark": "COLOR_ACCENT_3", "light": "COLOR_ACCENT_4"},
+    "--link-color": _LINK_COLOR_SPEC,
     "--hover-color": "COLOR_ACCENT_3",
     "--danger-color": "COLOR_ERROR_2",
     "--warning-bg": "COLOR_WARN_2",
@@ -38,8 +63,7 @@ CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--border-subtle": "COLOR_BACKGROUND_4",
     "--border-light": "COLOR_BACKGROUND_2",
     "--img-shadow-color": "COLOR_BACKGROUND_4",
-    "--scrollbar-thumb": "COLOR_DISABLED",
-    "--scrollbar-thumb-hover": "SPECIAL_TABS_SELECTED",
+    **_SCROLLBAR_COLORS,
     "--syn-highlight-bg": "EDITOR_CURRENTCELL",
     "--syn-fg": "EDITOR_NORMAL",
     "--syn-builtin": "EDITOR_BUILTIN",
@@ -60,16 +84,17 @@ CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
 APPEAL_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--background": "COLOR_BACKGROUND_1",
     "--foreground": "COLOR_TEXT_1",
-    "--heart": {"light": "Error.B70", "dark": "COLOR_ACCENT_4"},
-    "--link": {"light": "Error.B50", "dark": "COLOR_ACCENT_5"},
-    "--highlight": {"light": "Error.B30", "dark": "COLOR_ACCENT_3"},
+    "--link": _LINK_COLOR_SPEC,
+    "--heart": {"light": "Error.B90", "dark": "COLOR_ACCENT_4"},
+    "--highlight": {"light": "Error.B70", "dark": "COLOR_ACCENT_3"},
     "--hand": {"light": "Warning.B120", "dark": "Secondary.B110"},
     "--border-primary": "COLOR_BACKGROUND_5",
     "--border-secondary": "COLOR_BACKGROUND_4",
     "--code-bg": "COLOR_BACKGROUND_3",
+    **_SCROLLBAR_COLORS,
 }
 
-# Non-palette :root values for default CSS (aliases, literals, images). Shared by dark and light.
+# Non-palette static values for default CSS (aliases, literals, images). Shared by dark and light.
 CSS_STATIC: Dict[str, str] = {
     "--note-border": "var(--border-light)",
     "--note-text": "var(--text-color)",
@@ -92,14 +117,7 @@ CSS_STATIC: Dict[str, str] = {
     "--page-margin": "0px 25px 15px 25px",
     "--font-title": "'Trebuchet MS', sans-serif",
     "--font-heading": "'Helvetica', sans-serif",
-    "--img-arrow-down": "url(rc/arrow_down.png)",
-    "--img-arrow-down-disabled": "url(rc/arrow_down_disabled.png)",
-    "--img-arrow-up": "url(rc/arrow_up.png)",
-    "--img-arrow-up-disabled": "url(rc/arrow_up_disabled.png)",
-    "--img-arrow-left": "url(rc/arrow_left.png)",
-    "--img-arrow-left-disabled": "url(rc/arrow_left_disabled.png)",
-    "--img-arrow-right": "url(rc/arrow_right.png)",
-    "--img-arrow-right-disabled": "url(rc/arrow_right_disabled.png)",
+    **_ARROW_IMAGES,
     "--syn-string-alt": "var(--syn-prompt)",
     "--syn-comment-multiline": "var(--syn-comment)",
     "--syn-preproc": "var(--syn-comment)",
@@ -129,6 +147,9 @@ CSS_STATIC: Dict[str, str] = {
     "--syn-string-regex": "var(--syn-string-alt)",
     "--syn-string-symbol": "var(--syn-string-alt)",
 }
+
+# Fallback relative urls for appeal CSS when rc/ is not supplied (build without export).
+APPEAL_STATIC: Dict[str, str] = dict(_ARROW_IMAGES)
 
 # Emission order and optional section comments for the generated :root block.
 _ROOT_SECTIONS: List[Tuple[str, List[str]]] = [
@@ -184,16 +205,7 @@ _ROOT_SECTIONS: List[Tuple[str, List[str]]] = [
     ),
     (
         "Images (filenames match theme rc/)",
-        [
-            "--img-arrow-down",
-            "--img-arrow-down-disabled",
-            "--img-arrow-up",
-            "--img-arrow-up-disabled",
-            "--img-arrow-left",
-            "--img-arrow-left-disabled",
-            "--img-arrow-right",
-            "--img-arrow-right-disabled",
-        ],
+        list(_ARROW_IMAGES),
     ),
     (
         "Syntax (Pygments)",
@@ -340,6 +352,18 @@ def merge_appeal_color_map(
 ) -> Dict[str, CssColorSpec]:
     """Merge sparse theme overrides onto ``APPEAL_COLOR_MAP``."""
     return merge_color_map(APPEAL_COLOR_MAP, overrides, map_name="APPEAL_COLOR_MAP")
+
+
+def arrow_image_data_uris(rc_dir: Path) -> Dict[str, str]:
+    """Return arrow CSS custom properties as PNG data URIs from ``rc_dir``."""
+    values: Dict[str, str] = {}
+    for css_var, filename in _ARROW_FILES.items():
+        path = rc_dir / filename
+        if not path.is_file():
+            raise FileNotFoundError(f"Arrow image for {css_var} not found: {path}")
+        encoded = base64.standard_b64encode(path.read_bytes()).decode("ascii")
+        values[css_var] = f'url("data:image/png;base64,{encoded}")'
+    return values
 
 
 def palette_hex(palette_class: Type[Any], key: str) -> str:
@@ -532,14 +556,21 @@ def resolve_appeal_values(
     *,
     color_map: Optional[Mapping[str, CssColorSpec]] = None,
     color_classes: Optional[Mapping[str, Type[Any]]] = None,
+    rc_dir: Optional[Path] = None,
 ) -> Dict[str, str]:
-    """Resolve appeal CSS custom properties for a palette and variant."""
+    """Resolve appeal CSS custom properties for a palette and variant.
+
+    If ``rc_dir`` is given, arrow image vars are PNG data URIs from that
+    directory. Otherwise relative ``url(rc/...)`` values are used.
+    """
     mapping = color_map if color_map is not None else APPEAL_COLOR_MAP
+    static = arrow_image_data_uris(rc_dir) if rc_dir is not None else APPEAL_STATIC
     return resolve_color_map_values(
         palette_class,
         variant,
         mapping,
         color_classes=color_classes,
+        static=static,
     )
 
 
@@ -551,7 +582,7 @@ def format_appeal(values: Dict[str, str], variant: str) -> str:
         "",
         f'[data-mode="{variant}"] {{',
     ]
-    for name in APPEAL_COLOR_MAP:
+    for name in list(APPEAL_COLOR_MAP) + list(APPEAL_STATIC):
         lines.append(f"  {name}: {values[name]};")
     lines.append("}")
     lines.append("")
@@ -564,8 +595,12 @@ def build_appeal_css(
     *,
     color_map: Optional[Mapping[str, CssColorSpec]] = None,
     color_classes: Optional[Mapping[str, Type[Any]]] = None,
+    rc_dir: Optional[Path] = None,
 ) -> str:
-    """Build the ``appeal.css`` content for a theme variant."""
+    """Build the ``appeal.css`` content for a theme variant.
+
+    Pass ``rc_dir`` to embed arrow PNGs as data URIs.
+    """
     _require_css_variant(variant)
     return format_appeal(
         resolve_appeal_values(
@@ -573,6 +608,7 @@ def build_appeal_css(
             variant,
             color_map=color_map,
             color_classes=color_classes,
+            rc_dir=rc_dir,
         ),
         variant,
     )
@@ -588,6 +624,8 @@ def write_appeal_css(
 ) -> Path:
     """Write ``appeal.css`` into a variant export directory.
 
+    Arrow images are read from ``variant_dir/rc`` and embedded as data URIs.
+
     Returns:
         Path to the written file.
     """
@@ -599,5 +637,6 @@ def write_appeal_css(
             palette_class,
             color_map=color_map,
             color_classes=color_classes,
+            rc_dir=variant_dir / "rc",
         ),
     )

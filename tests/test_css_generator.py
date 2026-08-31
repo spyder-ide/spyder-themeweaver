@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import re
 from pathlib import Path
 
@@ -9,9 +10,12 @@ import pytest
 
 from themeweaver.core.colorsystem import get_color_classes_for_theme
 from themeweaver.core.css_generator import (
+    _ARROW_FILES,
     APPEAL_COLOR_MAP,
+    APPEAL_STATIC,
     CSS_COLOR_MAP,
     CSS_STATIC,
+    arrow_image_data_uris,
     build_appeal_css,
     build_default_css,
     build_root,
@@ -30,10 +34,18 @@ from themeweaver.core.yaml_loader import (
     load_css_overrides_from_yaml,
 )
 
+_STUB_PNG = b"\x89PNG\r\nstub"
+
+
+def _write_stub_arrow_pngs(rc_dir: Path, content: bytes = _STUB_PNG) -> None:
+    rc_dir.mkdir(parents=True, exist_ok=True)
+    for filename in _ARROW_FILES.values():
+        (rc_dir / filename).write_bytes(content)
+
 
 def _css_var_value(css: str, name: str) -> str:
     match = re.search(
-        rf"^\s*{re.escape(name)}\s*:\s*([^;]+);",
+        rf"^\s*{re.escape(name)}\s*:\s*(.+);\s*$",
         css,
         re.MULTILINE,
     )
@@ -247,6 +259,22 @@ class TestMergeAppealColorMap:
             merge_appeal_color_map({"--link": {"dark": "COLOR_ACCENT_1"}})
 
 
+class TestArrowImageDataUris:
+    def test_encodes_png_bytes(self, tmp_path: Path) -> None:
+        rc_dir = tmp_path / "rc"
+        _write_stub_arrow_pngs(rc_dir)
+        uris = arrow_image_data_uris(rc_dir)
+        assert list(uris) == list(_ARROW_FILES)
+        encoded = uris["--img-arrow-down"]
+        assert encoded.startswith('url("data:image/png;base64,')
+        payload = encoded.removeprefix('url("data:image/png;base64,').removesuffix('")')
+        assert base64.standard_b64decode(payload) == _STUB_PNG
+
+    def test_missing_file(self, tmp_path: Path) -> None:
+        with pytest.raises(FileNotFoundError, match="arrow_down.png"):
+            arrow_image_data_uris(tmp_path)
+
+
 class TestBuildAppeal:
     def test_mapped_vars_match_palette(self) -> None:
         palettes = create_palettes("spyder")
@@ -260,19 +288,53 @@ class TestBuildAppeal:
                 assert _css_var_value(css, css_var) == expected, (
                     f"{variant} {css_var} should be {expected}"
                 )
+            for css_var, value in APPEAL_STATIC.items():
+                assert _css_var_value(css, css_var) == value
 
     def test_invalid_variant(self) -> None:
         palettes = create_palettes("spyder")
         with pytest.raises(ValueError, match="Unsupported CSS variant"):
             build_appeal_css("sepia", palettes.dark)
 
-    def test_write_appeal_css(self, tmp_path: Path) -> None:
+    def test_write_appeal_css_embeds_arrow_data_uris(self, tmp_path: Path) -> None:
         palettes = create_palettes("spyder")
+        color_classes = get_color_classes_for_theme("spyder")
         variant_dir = tmp_path / "dark"
-        out = write_appeal_css(variant_dir, "dark", palettes.dark)
+        rc_dir = variant_dir / "rc"
+        _write_stub_arrow_pngs(rc_dir)
+        out = write_appeal_css(
+            variant_dir,
+            "dark",
+            palettes.dark,
+            color_classes=color_classes,
+        )
         assert out == variant_dir / "appeal.css"
-        assert out.is_file()
-        assert '[data-mode="dark"]' in out.read_text(encoding="utf-8")
+        text = out.read_text(encoding="utf-8")
+        assert '[data-mode="dark"]' in text
+        assert "url(rc/" not in text
+        expected = arrow_image_data_uris(rc_dir)
+        for css_var, value in expected.items():
+            assert _css_var_value(text, css_var) == value
+
+    def test_write_appeal_css_requires_rc_pngs(self, tmp_path: Path) -> None:
+        palettes = create_palettes("spyder")
+        with pytest.raises(FileNotFoundError, match="arrow_down.png"):
+            write_appeal_css(tmp_path / "dark", "dark", palettes.dark)
+
+    def test_build_appeal_css_embeds_from_rc_dir(self, tmp_path: Path) -> None:
+        palettes = create_palettes("spyder")
+        color_classes = get_color_classes_for_theme("spyder")
+        rc_dir = tmp_path / "rc"
+        _write_stub_arrow_pngs(rc_dir)
+        css = build_appeal_css(
+            "dark",
+            palettes.dark,
+            color_classes=color_classes,
+            rc_dir=rc_dir,
+        )
+        expected = arrow_image_data_uris(rc_dir)
+        assert _css_var_value(css, "--img-arrow-down") == expected["--img-arrow-down"]
+        assert "url(rc/" not in css
 
     def test_overrides_apply_palette_and_class_refs(self) -> None:
         palettes = create_palettes("spyder")
@@ -411,6 +473,10 @@ class TestExportIntegration:
                 assert _css_var_value(appeal_text, css_var) == resolve_css_color_value(
                     palette, source_key, color_classes
                 )
+            expected_arrows = arrow_image_data_uris(variant_dir / "rc")
+            for css_var, value in expected_arrows.items():
+                assert _css_var_value(appeal_text, css_var) == value
+            assert "url(rc/" not in appeal_text
 
     def test_non_spyder_theme_uses_its_palette(self, tmp_path: Path) -> None:
         exporter = ThemeExporter(build_dir=tmp_path / "build")
