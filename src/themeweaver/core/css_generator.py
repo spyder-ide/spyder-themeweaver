@@ -19,6 +19,7 @@ CssColorSpec = Union[str, Mapping[str, str]]
 
 # Shared palette mappings used by both default and appeal CSS.
 _LINK_COLOR_SPEC: CssColorSpec = {"dark": "COLOR_ACCENT_3", "light": "COLOR_ACCENT_4"}
+_HOVER_COLOR_SPEC: CssColorSpec = {"dark": "COLOR_ACCENT_4", "light": "COLOR_ACCENT_3"}
 _SCROLLBAR_COLORS: Dict[str, CssColorSpec] = {
     "--scrollbar-thumb": "COLOR_DISABLED",
     "--scrollbar-thumb-hover": "SPECIAL_TABS_SELECTED",
@@ -54,7 +55,7 @@ CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--header-bg-color": {"dark": "COLOR_ACCENT_1", "light": "SPECIAL_TABS_SELECTED"},
     "--header-text-color": {"dark": "COLOR_TEXT_1", "light": "COLOR_BACKGROUND_1"},
     "--link-color": _LINK_COLOR_SPEC,
-    "--hover-color": "COLOR_ACCENT_3",
+    "--hover-color": _HOVER_COLOR_SPEC,
     "--danger-color": "COLOR_ERROR_2",
     "--warning-bg": "COLOR_WARN_2",
     "--warning-border": "COLOR_WARN_1",
@@ -84,7 +85,8 @@ CSS_COLOR_MAP: Dict[str, CssColorSpec] = {
 APPEAL_COLOR_MAP: Dict[str, CssColorSpec] = {
     "--background": "COLOR_BACKGROUND_1",
     "--foreground": "COLOR_TEXT_1",
-    "--link": _LINK_COLOR_SPEC,
+    "--link-color": _LINK_COLOR_SPEC,
+    "--hover-color": _HOVER_COLOR_SPEC,
     "--heart": {"light": "Error.B90", "dark": "COLOR_ACCENT_4"},
     "--highlight": {"light": "Error.B70", "dark": "COLOR_ACCENT_3"},
     "--hand": {"light": "Warning.B120", "dark": "Secondary.B110"},
