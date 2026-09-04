@@ -1,1 +1,1 @@
-"""Stylesheet templates used to generate default.css."""
+"""Stylesheet templates used to generate default.css and pydoc.css."""

@@ -454,9 +454,49 @@ def test_load_rules_missing_template(tmp_path: Path) -> None:
         css_generator.load_rules()
 
 
+def test_load_rules_missing_scrollbar_template(tmp_path: Path) -> None:
+    (tmp_path / "rules.css").write_text("body {}\n", encoding="utf-8")
+    with (
+        patch.object(css_generator, "_RESOURCES_DIR", tmp_path),
+        pytest.raises(FileNotFoundError, match="CSS scrollbar template not found"),
+    ):
+        css_generator.load_rules()
+
+
+def test_load_pydoc_rules_missing_template(tmp_path: Path) -> None:
+    with (
+        patch.object(css_generator, "_RESOURCES_DIR", tmp_path),
+        pytest.raises(FileNotFoundError, match="Pydoc CSS rules template not found"),
+    ):
+        css_generator.load_pydoc_rules()
+
+
+def test_append_scrollbar_empty_rules_and_missing_newline() -> None:
+    with patch.object(
+        css_generator, "_read_css_resource", return_value="::-webkit-scrollbar {}"
+    ):
+        assert css_generator._append_scrollbar("") == "::-webkit-scrollbar {}\n"
+        assert css_generator._append_scrollbar("body {}") == (
+            "body {}\n\n::-webkit-scrollbar {}\n"
+        )
+
+
+def test_append_scrollbar_empty_scrollbar() -> None:
+    with patch.object(css_generator, "_read_css_resource", return_value=""):
+        assert css_generator._append_scrollbar("body {}") == "body {}\n\n"
+
+
 def test_build_default_css_adds_rules_trailing_newline() -> None:
     with (
         patch.object(css_generator, "build_root", return_value=":root {}\n"),
         patch.object(css_generator, "load_rules", return_value="body {}"),
     ):
         assert css_generator.build_default_css("dark", object).endswith("body {}\n")
+
+
+def test_build_pydoc_css_adds_rules_trailing_newline() -> None:
+    with (
+        patch.object(css_generator, "build_pydoc_root", return_value=":root {}\n"),
+        patch.object(css_generator, "load_pydoc_rules", return_value="body {}"),
+    ):
+        assert css_generator.build_pydoc_css("dark", object).endswith("body {}\n")

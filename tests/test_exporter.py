@@ -87,6 +87,7 @@ class TestThemeExporterSpyderExport:
             assert qss_file.exists()
             assert (variant_dir / "default.css").exists()
             assert (variant_dir / "appeal.css").exists()
+            assert (variant_dir / "pydoc.css").exists()
 
 
 class TestThemeExporter:

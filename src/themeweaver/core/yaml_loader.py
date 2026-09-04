@@ -145,18 +145,7 @@ def load_css_overrides_from_yaml(
         FileNotFoundError: If the theme directory or mappings.yaml file doesn't exist.
         ValueError: If the YAML file contains invalid syntax.
     """
-    if themes_dir is None:
-        themes_dir = Path.cwd() / "themes"
-
-    mappings_file = themes_dir / theme_name / "mappings.yaml"
-    overrides = load_yaml_file(mappings_file, "css_overrides")
-    if overrides is None:
-        return {}
-    if not isinstance(overrides, dict):
-        raise ValueError(
-            f"css_overrides in {mappings_file} must be a mapping, got {type(overrides).__name__}"
-        )
-    return overrides
+    return _load_overrides_section(theme_name, "css_overrides", themes_dir)
 
 
 def load_appeal_overrides_from_yaml(
@@ -180,16 +169,47 @@ def load_appeal_overrides_from_yaml(
         FileNotFoundError: If the theme directory or mappings.yaml file doesn't exist.
         ValueError: If the YAML file contains invalid syntax.
     """
+    return _load_overrides_section(theme_name, "appeal_overrides", themes_dir)
+
+
+def load_pydoc_overrides_from_yaml(
+    theme_name: str = "solarized", themes_dir: Optional[Path] = None
+) -> Dict[str, Any]:
+    """
+    Load sparse pydoc-CSS color overrides from mappings.yaml for a theme.
+
+    Keys are CSS custom property names (e.g. ``--heading-color``). Values are
+    palette attribute names, color-class refs (``Primary.B30``), or a mapping
+    with both ``dark`` and ``light`` variants. Missing section yields ``{}``.
+
+    Args:
+        theme_name: Name of the theme to load. Defaults to "solarized".
+        themes_dir: Directory where themes are stored. If None, uses default.
+
+    Returns:
+        Pydoc override mapping, or empty dict if the section is absent.
+
+    Raises:
+        FileNotFoundError: If the theme directory or mappings.yaml file doesn't exist.
+        ValueError: If the YAML file contains invalid syntax.
+    """
+    return _load_overrides_section(theme_name, "pydoc_overrides", themes_dir)
+
+
+def _load_overrides_section(
+    theme_name: str, section: str, themes_dir: Optional[Path] = None
+) -> Dict[str, Any]:
+    """Load a mappings.yaml override section as a dict (empty if missing)."""
     if themes_dir is None:
         themes_dir = Path.cwd() / "themes"
 
     mappings_file = themes_dir / theme_name / "mappings.yaml"
-    overrides = load_yaml_file(mappings_file, "appeal_overrides")
+    overrides = load_yaml_file(mappings_file, section)
     if overrides is None:
         return {}
     if not isinstance(overrides, dict):
         raise ValueError(
-            f"appeal_overrides in {mappings_file} must be a mapping, got {type(overrides).__name__}"
+            f"{section} in {mappings_file} must be a mapping, got {type(overrides).__name__}"
         )
     return overrides
 

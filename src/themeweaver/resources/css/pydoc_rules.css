@@ -1,0 +1,135 @@
+/* --- General styles --- */
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: var(--page-margin);
+    width: 95%;
+}
+
+table {
+    width: 100%;
+    border-spacing: 10px;
+}
+
+td {
+    padding-bottom: 0;
+    vertical-align: bottom;
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --- Links --- */
+
+a {
+    color: var(--link-color);
+}
+
+a:hover {
+    color: var(--hover-color);
+    text-decoration: underline;
+}
+
+/* --- Search --- */
+
+.input-search {
+    background-color: var(--search-bg);
+    border: 1px solid var(--search-border);
+    border-radius: var(--border-radius);
+    color: var(--search-text);
+}
+
+.submit-search {
+    background-color: var(--search-submit-bg);
+    border: 1px solid var(--search-border);
+    border-radius: var(--border-radius);
+    color: var(--search-submit-text);
+    font-size: 1em;
+}
+
+/* --- Section classes --- */
+
+.align_right {
+    text-align: right;
+}
+
+.heading {
+    text-overflow: clip;
+    font-weight: bold;
+    font-size: 1.3em;
+    background-color: var(--header-bg-color);
+    color: var(--header-text-color);
+    border-radius: var(--border-radius);
+}
+
+.heading a {
+    filter: brightness(0) invert(1);
+}
+
+.normal {
+    font-weight: normal;
+    font-size: .7em;
+}
+
+.grey {
+    color: var(--muted-color);
+}
+
+.repr {
+    color: var(--syn-string);
+}
+
+.docmodule_link {
+    font-size: smaller;
+}
+
+.section_title {
+    font-size: .9em;
+    font-weight: bold;
+    color: var(--heading-color);
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.builtin_modules, .index, .package, .module, .classes, .functions, .data,
+.topics, .keywords, .author, .credits, .search, .getfile {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.error {
+    color: var(--header-text-color);
+    background-color: var(--danger-color);
+}
+
+.error .section_title {
+    color: var(--header-text-color);
+}
+
+.docclass {
+    color: var(--text-color);
+    background-color: var(--surface-color);
+}
+
+.signature {
+    color: var(--link-color);
+    filter: saturate(150%) brightness(90%);
+}
+
+.inner_table {
+    background-color: var(--surface-color);
+    width: 100%;
+    color: var(--text-color);
+    padding-bottom: 0;
+}
+
+.error .inner_table {
+    background-color: var(--danger-color);
+    width: 100%;
+    color: var(--header-text-color);
+    padding-bottom: 0;
+}

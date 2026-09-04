@@ -15,23 +15,29 @@ from themeweaver.core.css_generator import (
     APPEAL_STATIC,
     CSS_COLOR_MAP,
     CSS_STATIC,
+    PYDOC_COLOR_MAP,
+    PYDOC_STATIC,
     arrow_image_data_uris,
     build_appeal_css,
     build_default_css,
+    build_pydoc_css,
     build_root,
     merge_appeal_color_map,
     merge_css_color_map,
+    merge_pydoc_color_map,
     palette_hex,
     resolve_css_color_value,
     resolve_palette_key,
     write_appeal_css,
     write_default_css,
+    write_pydoc_css,
 )
 from themeweaver.core.palette import create_palettes
 from themeweaver.core.theme_exporter import ThemeExporter
 from themeweaver.core.yaml_loader import (
     load_appeal_overrides_from_yaml,
     load_css_overrides_from_yaml,
+    load_pydoc_overrides_from_yaml,
 )
 
 _STUB_PNG = b"\x89PNG\r\nstub"
@@ -232,8 +238,8 @@ class TestMergeAppealColorMap:
         assert merged is not APPEAL_COLOR_MAP
 
     def test_sparse_override_replaces_spec(self) -> None:
-        merged = merge_appeal_color_map({"--link": "COLOR_ACCENT_2"})
-        assert merged["--link"] == "COLOR_ACCENT_2"
+        merged = merge_appeal_color_map({"--link-color": "COLOR_ACCENT_2"})
+        assert merged["--link-color"] == "COLOR_ACCENT_2"
         assert merged["--foreground"] == APPEAL_COLOR_MAP["--foreground"]
 
     def test_variant_override(self) -> None:
@@ -256,7 +262,7 @@ class TestMergeAppealColorMap:
 
     def test_partial_variant_mapping_rejected(self) -> None:
         with pytest.raises(ValueError, match="missing"):
-            merge_appeal_color_map({"--link": {"dark": "COLOR_ACCENT_1"}})
+            merge_appeal_color_map({"--link-color": {"dark": "COLOR_ACCENT_1"}})
 
 
 class TestArrowImageDataUris:
@@ -341,7 +347,7 @@ class TestBuildAppeal:
         color_classes = get_color_classes_for_theme("spyder")
         color_map = merge_appeal_color_map(
             {
-                "--link": "COLOR_ACCENT_2",
+                "--link-color": "COLOR_ACCENT_2",
                 "--border-primary": {
                     "dark": "Primary.B60",
                     "light": "Primary.B100",
@@ -354,7 +360,7 @@ class TestBuildAppeal:
             color_map=color_map,
             color_classes=color_classes,
         )
-        assert _css_var_value(dark_css, "--link") == palette_hex(
+        assert _css_var_value(dark_css, "--link-color") == palette_hex(
             palettes.dark, "COLOR_ACCENT_2"
         )
         assert (
@@ -372,6 +378,7 @@ class TestBuildAndWrite:
         assert ":root {" in css
         assert "body {" in css
         assert "div.title h1" in css
+        assert "::-webkit-scrollbar" in css
 
     def test_invalid_variant(self) -> None:
         palettes = create_palettes("spyder")
@@ -388,8 +395,11 @@ class TestBuildAndWrite:
 
 
 class TestLoadCssOverrides:
-    def test_missing_section_is_empty(self) -> None:
-        assert load_css_overrides_from_yaml("spyder") == {}
+    def test_missing_section_is_empty(self, tmp_path: Path) -> None:
+        theme_dir = tmp_path / "fixture-theme"
+        theme_dir.mkdir()
+        (theme_dir / "mappings.yaml").write_text("{}\n", encoding="utf-8")
+        assert load_css_overrides_from_yaml("fixture-theme", themes_dir=tmp_path) == {}
 
     def test_sparse_overrides_from_yaml(self, tmp_path: Path) -> None:
         theme_dir = tmp_path / "fixture-theme"
@@ -416,8 +426,13 @@ class TestLoadCssOverrides:
 
 
 class TestLoadAppealOverrides:
-    def test_missing_section_is_empty(self) -> None:
-        assert load_appeal_overrides_from_yaml("spyder") == {}
+    def test_missing_section_is_empty(self, tmp_path: Path) -> None:
+        theme_dir = tmp_path / "fixture-theme"
+        theme_dir.mkdir()
+        (theme_dir / "mappings.yaml").write_text("{}\n", encoding="utf-8")
+        assert (
+            load_appeal_overrides_from_yaml("fixture-theme", themes_dir=tmp_path) == {}
+        )
 
     def test_sparse_overrides_from_yaml(self, tmp_path: Path) -> None:
         theme_dir = tmp_path / "fixture-theme"
@@ -426,7 +441,7 @@ class TestLoadAppealOverrides:
             "\n".join(
                 [
                     "appeal_overrides:",
-                    "  --link: COLOR_ACCENT_2",
+                    "  --link-color: COLOR_ACCENT_2",
                     "  --border-primary:",
                     "    dark: Primary.B60",
                     "    light: Primary.B100",
@@ -438,7 +453,7 @@ class TestLoadAppealOverrides:
         overrides = load_appeal_overrides_from_yaml(
             "fixture-theme", themes_dir=tmp_path
         )
-        assert overrides["--link"] == "COLOR_ACCENT_2"
+        assert overrides["--link-color"] == "COLOR_ACCENT_2"
         assert overrides["--border-primary"] == {
             "dark": "Primary.B60",
             "light": "Primary.B100",
@@ -455,10 +470,12 @@ class TestExportIntegration:
             text = css_path.read_text(encoding="utf-8")
             palette = create_palettes("spyder").get_palette(variant)
             assert palette is not None
-            for css_var, spec in CSS_COLOR_MAP.items():
-                palette_key = resolve_palette_key(spec, variant)
-                assert _css_var_value(text, css_var) == palette_hex(
-                    palette, palette_key
+            color_classes = get_color_classes_for_theme("spyder")
+            css_map = merge_css_color_map(load_css_overrides_from_yaml("spyder"))
+            for css_var, spec in css_map.items():
+                source_key = resolve_palette_key(spec, variant)
+                assert _css_var_value(text, css_var) == resolve_css_color_value(
+                    palette, source_key, color_classes
                 )
             assert "url(rc/arrow_down.png)" in text
             assert "body {" in text
@@ -467,8 +484,10 @@ class TestExportIntegration:
             assert appeal_path.is_file()
             appeal_text = appeal_path.read_text(encoding="utf-8")
             assert f'[data-mode="{variant}"]' in appeal_text
-            color_classes = get_color_classes_for_theme("spyder")
-            for css_var, spec in APPEAL_COLOR_MAP.items():
+            appeal_map = merge_appeal_color_map(
+                load_appeal_overrides_from_yaml("spyder")
+            )
+            for css_var, spec in appeal_map.items():
                 source_key = resolve_palette_key(spec, variant)
                 assert _css_var_value(appeal_text, css_var) == resolve_css_color_value(
                     palette, source_key, color_classes
@@ -477,6 +496,24 @@ class TestExportIntegration:
             for css_var, value in expected_arrows.items():
                 assert _css_var_value(appeal_text, css_var) == value
             assert "url(rc/" not in appeal_text
+
+            pydoc_path = variant_dir / "pydoc.css"
+            assert pydoc_path.is_file()
+            pydoc_text = pydoc_path.read_text(encoding="utf-8")
+            pydoc_map = merge_pydoc_color_map(load_pydoc_overrides_from_yaml("spyder"))
+            for css_var, spec in pydoc_map.items():
+                source_key = resolve_palette_key(spec, variant)
+                assert _css_var_value(pydoc_text, css_var) == resolve_css_color_value(
+                    palette, source_key, color_classes
+                )
+            assert "url(rc/arrow_down.png)" in pydoc_text
+            assert ".heading {" in pydoc_text
+            assert ".repr {" in pydoc_text
+            assert "::-webkit-scrollbar" in pydoc_text
+            assert ".search," in pydoc_text or ".search {" in pydoc_text
+            assert ".getfile" in pydoc_text
+            assert ".repr_string" not in pydoc_text
+            assert ".ka_ping_yee" not in pydoc_text
 
     def test_non_spyder_theme_uses_its_palette(self, tmp_path: Path) -> None:
         exporter = ThemeExporter(build_dir=tmp_path / "build")
@@ -525,7 +562,7 @@ class TestExportIntegration:
             (Path.cwd() / "themes" / "spyder" / "mappings.yaml").read_text(
                 encoding="utf-8"
             )
-            + "\nappeal_overrides:\n  --link: COLOR_ACCENT_2\n",
+            + "\nappeal_overrides:\n  --link-color: COLOR_ACCENT_2\n",
             encoding="utf-8",
         )
         exporter = ThemeExporter(
@@ -534,6 +571,182 @@ class TestExportIntegration:
         result = exporter.export_theme("fixture-theme", variants=["dark"])
         appeal_text = (result["dark"] / "appeal.css").read_text(encoding="utf-8")
         palette = create_palettes("fixture-theme", themes_dir=tmp_path / "themes").dark
-        assert _css_var_value(appeal_text, "--link") == palette_hex(
+        assert _css_var_value(appeal_text, "--link-color") == palette_hex(
+            palette, "COLOR_ACCENT_2"
+        )
+
+
+class TestMergePydocColorMap:
+    def test_no_overrides_returns_defaults(self) -> None:
+        merged = merge_pydoc_color_map(None)
+        assert merged == PYDOC_COLOR_MAP
+        assert merged is not PYDOC_COLOR_MAP
+
+    def test_sparse_override_replaces_spec(self) -> None:
+        merged = merge_pydoc_color_map({"--heading-color": "COLOR_ACCENT_2"})
+        assert merged["--heading-color"] == "COLOR_ACCENT_2"
+        assert merged["--text-color"] == PYDOC_COLOR_MAP["--text-color"]
+
+    def test_variant_override(self) -> None:
+        merged = merge_pydoc_color_map(
+            {
+                "--border-color": {
+                    "dark": "Primary.B60",
+                    "light": "Primary.B100",
+                }
+            }
+        )
+        assert merged["--border-color"] == {
+            "dark": "Primary.B60",
+            "light": "Primary.B100",
+        }
+
+    def test_unknown_key_rejected(self) -> None:
+        with pytest.raises(ValueError, match="Unknown override keys"):
+            merge_pydoc_color_map({"--not-a-real-var": "COLOR_TEXT_1"})
+
+    def test_partial_variant_mapping_rejected(self) -> None:
+        with pytest.raises(ValueError, match="missing"):
+            merge_pydoc_color_map({"--border-color": {"dark": "COLOR_BACKGROUND_5"}})
+
+
+class TestBuildPydoc:
+    def test_mapped_vars_match_palette(self) -> None:
+        palettes = create_palettes("spyder")
+        color_classes = get_color_classes_for_theme("spyder")
+        for variant, palette in (("dark", palettes.dark), ("light", palettes.light)):
+            css = build_pydoc_css(variant, palette, color_classes=color_classes)
+            assert ":root {" in css
+            for css_var, spec in PYDOC_COLOR_MAP.items():
+                source_key = resolve_palette_key(spec, variant)
+                expected = resolve_css_color_value(palette, source_key, color_classes)
+                assert _css_var_value(css, css_var) == expected, (
+                    f"{variant} {css_var} should be {expected}"
+                )
+            for css_var, value in PYDOC_STATIC.items():
+                assert _css_var_value(css, css_var) == value
+
+    def test_build_includes_pydoc_rules_and_scrollbar(self) -> None:
+        palettes = create_palettes("spyder")
+        css = build_pydoc_css("dark", palettes.dark)
+        assert ".heading {" in css
+        assert ".input-search" in css
+        assert ".repr {" in css
+        assert "::-webkit-scrollbar" in css
+        assert "url(rc/arrow_down.png)" in css
+
+    def test_invalid_variant(self) -> None:
+        palettes = create_palettes("spyder")
+        with pytest.raises(ValueError, match="Unsupported CSS variant"):
+            build_pydoc_css("sepia", palettes.dark)
+
+    def test_write_pydoc_css(self, tmp_path: Path) -> None:
+        palettes = create_palettes("spyder")
+        variant_dir = tmp_path / "dark"
+        out = write_pydoc_css(variant_dir, "dark", palettes.dark)
+        assert out == variant_dir / "pydoc.css"
+        assert out.is_file()
+        text = out.read_text(encoding="utf-8")
+        assert "url(rc/arrow_down.png)" in text
+        assert "::-webkit-scrollbar" in text
+
+    def test_overrides_apply_palette_and_class_refs(self) -> None:
+        palettes = create_palettes("spyder")
+        color_classes = get_color_classes_for_theme("spyder")
+        color_map = merge_pydoc_color_map(
+            {
+                "--heading-color": "COLOR_ACCENT_2",
+                "--border-color": {
+                    "dark": "Primary.B60",
+                    "light": "Primary.B100",
+                },
+            }
+        )
+        dark_css = build_pydoc_css(
+            "dark",
+            palettes.dark,
+            color_map=color_map,
+            color_classes=color_classes,
+        )
+        assert _css_var_value(dark_css, "--heading-color") == palette_hex(
+            palettes.dark, "COLOR_ACCENT_2"
+        )
+        assert (
+            _css_var_value(dark_css, "--border-color") == color_classes["Primary"].B60
+        )
+        assert _css_var_value(dark_css, "--text-color") == palette_hex(
+            palettes.dark, "COLOR_TEXT_1"
+        )
+
+
+class TestLoadPydocOverrides:
+    def test_missing_section_is_empty(self, tmp_path: Path) -> None:
+        theme_dir = tmp_path / "fixture-theme"
+        theme_dir.mkdir()
+        (theme_dir / "mappings.yaml").write_text("{}\n", encoding="utf-8")
+        assert (
+            load_pydoc_overrides_from_yaml("fixture-theme", themes_dir=tmp_path) == {}
+        )
+
+    def test_sparse_overrides_from_yaml(self, tmp_path: Path) -> None:
+        theme_dir = tmp_path / "fixture-theme"
+        theme_dir.mkdir()
+        (theme_dir / "mappings.yaml").write_text(
+            "\n".join(
+                [
+                    "pydoc_overrides:",
+                    "  --heading-color: COLOR_ACCENT_2",
+                    "  --border-color:",
+                    "    dark: Primary.B60",
+                    "    light: Primary.B100",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        overrides = load_pydoc_overrides_from_yaml("fixture-theme", themes_dir=tmp_path)
+        assert overrides["--heading-color"] == "COLOR_ACCENT_2"
+        assert overrides["--border-color"] == {
+            "dark": "Primary.B60",
+            "light": "Primary.B100",
+        }
+
+
+class TestPydocOverridesExport:
+    def test_pydoc_overrides_from_yaml(self, tmp_path: Path) -> None:
+        theme_dir = tmp_path / "themes" / "fixture-theme"
+        theme_dir.mkdir(parents=True)
+        (theme_dir / "theme.yaml").write_text(
+            "\n".join(
+                [
+                    "name: fixture-theme",
+                    "variants:",
+                    "  dark: true",
+                    "  light: true",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        (theme_dir / "colorsystem.yaml").write_text(
+            (Path.cwd() / "themes" / "spyder" / "colorsystem.yaml").read_text(
+                encoding="utf-8"
+            ),
+            encoding="utf-8",
+        )
+        (theme_dir / "mappings.yaml").write_text(
+            (Path.cwd() / "themes" / "spyder" / "mappings.yaml").read_text(
+                encoding="utf-8"
+            )
+            + "\npydoc_overrides:\n  --heading-color: COLOR_ACCENT_2\n",
+            encoding="utf-8",
+        )
+        exporter = ThemeExporter(
+            build_dir=tmp_path / "build", themes_dir=tmp_path / "themes"
+        )
+        result = exporter.export_theme("fixture-theme", variants=["dark"])
+        pydoc_text = (result["dark"] / "pydoc.css").read_text(encoding="utf-8")
+        palette = create_palettes("fixture-theme", themes_dir=tmp_path / "themes").dark
+        assert _css_var_value(pydoc_text, "--heading-color") == palette_hex(
             palette, "COLOR_ACCENT_2"
         )

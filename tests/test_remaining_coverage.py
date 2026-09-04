@@ -269,6 +269,10 @@ def test_yaml_loader_errors_and_css_override_validation(tmp_path: Path) -> None:
             yaml_loader.load_appeal_overrides_from_yaml("sample", themes_dir=tmp_path)
             == {}
         )
+        assert (
+            yaml_loader.load_pydoc_overrides_from_yaml("sample", themes_dir=tmp_path)
+            == {}
+        )
     with (
         patch.object(yaml_loader, "load_yaml_file", return_value=[]),
         pytest.raises(ValueError, match="must be a mapping"),
@@ -279,6 +283,11 @@ def test_yaml_loader_errors_and_css_override_validation(tmp_path: Path) -> None:
         pytest.raises(ValueError, match="must be a mapping"),
     ):
         yaml_loader.load_appeal_overrides_from_yaml("sample", themes_dir=tmp_path)
+    with (
+        patch.object(yaml_loader, "load_yaml_file", return_value=[]),
+        pytest.raises(ValueError, match="must be a mapping"),
+    ):
+        yaml_loader.load_pydoc_overrides_from_yaml("sample", themes_dir=tmp_path)
 
 
 def test_rules_loader_remaining_branches(tmp_path: Path) -> None:
@@ -379,8 +388,10 @@ def test_theme_exporter_skip_variant_and_successful_export_all(tmp_path: Path) -
         patch.object(
             theme_exporter, "load_appeal_overrides_from_yaml", return_value={}
         ),
+        patch.object(theme_exporter, "load_pydoc_overrides_from_yaml", return_value={}),
         patch.object(theme_exporter, "merge_css_color_map", return_value={}),
         patch.object(theme_exporter, "merge_appeal_color_map", return_value={}),
+        patch.object(theme_exporter, "merge_pydoc_color_map", return_value={}),
         patch.object(theme_exporter, "get_color_classes_for_theme", return_value={}),
     ):
         assert exporter.export_theme("sample") == {}

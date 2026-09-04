@@ -24,6 +24,7 @@ from themeweaver.core.yaml_loader import (
     load_color_mappings_from_yaml,
     load_colors_from_yaml,
     load_css_overrides_from_yaml,
+    load_pydoc_overrides_from_yaml,
     load_semantic_mappings_from_yaml,
     load_theme_metadata_from_yaml,
 )
@@ -45,6 +46,7 @@ __all__ = [
     "load_color_mappings_from_yaml",
     "load_appeal_overrides_from_yaml",
     "load_css_overrides_from_yaml",
+    "load_pydoc_overrides_from_yaml",
     "load_semantic_mappings_from_yaml",
     # Version info
     "__version__",
