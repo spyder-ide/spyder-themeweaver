@@ -115,11 +115,6 @@ a:hover {
     background-color: var(--surface-color);
 }
 
-.signature {
-    color: var(--link-color);
-    filter: saturate(150%) brightness(90%);
-}
-
 .inner_table {
     background-color: var(--surface-color);
     width: 100%;
